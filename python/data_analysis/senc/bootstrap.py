@@ -55,7 +55,7 @@ class crossVal():
             self.pipe = Pipeline([('scaler', RobustScaler()), ('clf', clf)]) 
         else: 
             self.pipe = Pipeline([('clf', clf)]) 
-            
+        
         self.method = method 
         self.n_iter = n_iter 
         self.n_splits = n_splits 
@@ -185,7 +185,7 @@ class bootstrap():
             pass
         
         boots_score = pipe_copy.score(X_oob, y_oob) 
-                    
+        
         return boots_score 
     
     def get_scores(self, X_train, X_test, y): 

@@ -11,7 +11,7 @@ from sklearn.feature_selection import chi2, f_classif, mutual_info_classif
 
 from mlxtend.evaluate import permutation_test
 
-from joblib import Parallel, delayed 
+from joblib import Parallel, delayed, parallel_backend 
 import utils.progressbar as pgb 
 
 def my_F_test(X_S1, X_S2):
@@ -46,7 +46,7 @@ def shuffle_X_S1_X_S2_parloop(X_S1, X_S2):
     
     return X_S1_shuffle, X_S2_shuffle 
 
-def shuffle_X_S1_X_S2(X_S1, X_S2, n_shuffle=1000, n_jobs=-6): 
+def shuffle_X_S1_X_S2(X_S1, X_S2, n_shuffle=1000, n_jobs=-10): 
     
     with pgb.tqdm_joblib( pgb.tqdm(desc='shuffle', total=n_shuffle) ) as progress_bar: 
         X_S1_shuffle, X_S2_shuffle = zip(* Parallel(n_jobs=n_jobs)( 
@@ -74,11 +74,11 @@ def shuffle_parloop(X_S1, X_S2, statfunction):
     
     return sel_shuffle 
     
-def shuffle_stat(X_S1, X_S2, statfunction, n_samples=1000, n_jobs=-6): 
+def shuffle_stat(X_S1, X_S2, statfunction, n_samples=1000, n_jobs=-10): 
     
     with pgb.tqdm_joblib( pgb.tqdm(desc='shuffle', total=n_samples) ) as progress_bar: 
         sel_shuffle = Parallel(n_jobs=n_jobs)(
-            delayed(shuffle_parloop)(X_S1, X_S2, statfunction) for _ in range(n_samples)
+            delayed(shuffle_parloop)(X_S1, X_S2, statfunction) for _ in range(n_samples) 
         ) 
     
     gc.collect() 
@@ -111,7 +111,7 @@ def perm_parloop(X_S1_DPA, X_S2_DPA, X_S1_other, X_S2_other, i_iter, statfunctio
     
     return sel_perm, sel_perm2 
 
-def get_sel_perm(X_S1_DPA, X_S2_DPA, X_S1_other, X_S2_other, statfunction, statfunction2, n_samples=1000, n_jobs=-6): 
+def get_sel_perm(X_S1_DPA, X_S2_DPA, X_S1_other, X_S2_other, statfunction, statfunction2, n_samples=1000, n_jobs=-10): 
     
     with pgb.tqdm_joblib( pgb.tqdm(desc='perm', total=n_samples) ) as progress_bar: 
         sel_perm_DPA, sel_perm_other = zip(* Parallel(n_jobs=n_jobs)( delayed(perm_parloop)(X_S1_DPA, X_S2_DPA, X_S1_other, X_S2_other,
@@ -124,7 +124,8 @@ def get_sel_perm(X_S1_DPA, X_S2_DPA, X_S1_other, X_S2_other, statfunction, statf
     
     return sel_perm_DPA, sel_perm_other 
 
-def bootstrap_parloop(X_S1, X_S2, statfunction): 
+def bootstrap_parloop(X_S1, X_S2, statfunction):
+    np.random.seed(None) 
     # Sample (with replacement) from the given dataset 
     X_S1_sample = resample(X_S1, n_samples=X_S1.shape[0]) 
     X_S2_sample = resample(X_S2, n_samples=X_S2.shape[0]) 
@@ -134,7 +135,7 @@ def bootstrap_parloop(X_S1, X_S2, statfunction):
     
     return stats 
 
-def my_bootstraped_ci(X_S1, X_S2, confidence=0.95, n_samples=1000, statfunction=np.mean, n_jobs=-6): 
+def my_bootstraped_ci(X_S1, X_S2, confidence=0.95, n_samples=1000, statfunction=np.mean, n_jobs=-10): 
     """
     Bootstrap the confidence intervals for a given sample of a population
     and a statistic.
@@ -148,16 +149,21 @@ def my_bootstraped_ci(X_S1, X_S2, confidence=0.95, n_samples=1000, statfunction=
                    a list of values and returns a single value.
     Returns:
         Returns the upper and lower values of the confidence interval.
-    """    
+    """ 
     
-    with pgb.tqdm_joblib( pgb.tqdm(desc='bootstrap', total=n_samples) ) as progress_bar: 
-        stats = Parallel(n_jobs=n_jobs)(
-            delayed(bootstrap_parloop)(X_S1, X_S2, statfunction) for _ in range(n_samples)
-        ) 
+    with pgb.tqdm_joblib( pgb.tqdm(desc='bootstrap', total=n_samples) ) as progress_bar:
+        with parallel_backend("loky", inner_max_num_threads=1):        
+            stats = Parallel(n_jobs=n_jobs)( # 10 
+                delayed(bootstrap_parloop)(X_S1, X_S2, statfunction) for _ in range(n_samples) 
+            ) 
     
-    gc.collect()     
+    # stats = [] 
+    # for _ in pgb.tqdm(range(n_samples), desc='bootstrap') : 
+    #     stats.append(bootstrap_parloop(X_S1, X_S2, statfunction)) 
+    
+    gc.collect() 
     stats = np.asarray(stats) 
-    # print('stats', stats.shape) 
+    print('stats', stats.shape) 
     
     # Sort the array of per-sample statistics and cut off ends 
     # ostats = sorted(stats) 
@@ -170,10 +176,23 @@ def my_bootstraped_ci(X_S1, X_S2, confidence=0.95, n_samples=1000, statfunction=
     # lval = mean - np.percentile(ostats, ((1 - confidence) / 2) * 100, axis=0) 
     # uval = - mean + np.percentile(ostats, (confidence + ((1 - confidence) / 2)) * 100, axis=0) 
     
-    lval = np.absolute( mean - np.percentile(ostats, ((1 - confidence) / 2) * 100, axis=0) ) 
-    uval = np.absolute( - mean + np.percentile(ostats, (confidence + ((1 - confidence) / 2)) * 100, axis=0) ) 
+    p = (1.0 - confidence) / 2.0 * 100 
+    lperc = np.percentile(ostats, p , axis=0)
+    dum = np.vstack( ( np.zeros(lperc.shape), lperc) ).T 
     
-    ci = np.vstack((lval, uval)).T 
+    # lval = np.max(dum, axis=1)
+    lval = mean - np.max(dum, axis=1) 
+    
+    p = (confidence + (1.0 - confidence) / 2.0 ) * 100 
+    uperc = np.percentile(ostats, p , axis=0) 
+    dum = np.vstack( ( np.ones(uperc.shape), uperc) ).T 
+    
+    # uval = np.min( dum, axis=1) 
+    uval = -mean + np.min(dum, axis=1) 
+    
+    print('mean', mean, 'lower', lperc, 'upper', uperc, 'm-l', lval, 'm+l', uval) 
+    
+    ci = np.vstack((lval, uval)) 
     # print(ci.shape) 
     
     return ci 

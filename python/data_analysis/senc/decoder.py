@@ -150,4 +150,30 @@ def get_score(X_S1, X_S2, return_hyper=0, **kwargs):
     else:
         return np.array(score)        
     
+def get_cv_score(X_S1, X_S2, return_hyper=0,**kwargs):
+        
+    # clf = get_clf(**kwargs) 
+    
+    X_S1_S2 = np.vstack( ( X_S1, X_S2 ) ) 
+    y = np.hstack((np.zeros(X_S1.shape[0]), np.ones(X_S2.shape[0]) )) 
+    
+    cv_scores = []
+    lower = []
+    upper = []
+    
+    for i_epochs in range(X_S1_S2.shape[-1]): 
+        X = X_S1_S2[..., i_epochs] 
+        
+        cv_score = outer_cv(kwargs['clf'], X, y, folds=kwargs['fold_type'], n_jobs=-1) 
+        # cv_score = nested_cv(kwargs['clf'], X, y, kwargs['param_grid'], IF_TUNE=0, IF_CI=0, n_jobs=-1) 
+        cv_scores.append(cv_score) 
+        # lower.append(cv_lower) 
+        # upper.append(cv_upper) 
+    
+    # print(score)
+    # if kwargs['IF_TUNE']: 
+    #     return np.array(cv_scores), tuned_clf 
+    # else:  
+    return np.array(cv_scores) 
+    # return np.array(score) , lower, upper 
     

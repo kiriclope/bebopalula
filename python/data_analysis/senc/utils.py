@@ -420,8 +420,8 @@ def get_sel(X_S1, X_S2, return_Delta=0, **kwargs):
             out = get_proj(X_S1, X_S2, return_Delta=0, **kwargs)
     
     elif kwargs['obj']=='score':
-        out = get_score(X_S1, X_S2, **kwargs)
-        
+        out = get_cv_score(X_S1, X_S2, **kwargs) 
+    
     elif kwargs['obj']=='coefs': 
         out = get_coefs(X_S1, X_S2, **kwargs) 
     

@@ -49,11 +49,14 @@ def create_figdir(**kwargs):
     
     gv.figdir = gv.figdir + '/n_days_%d' % n_days
     
-    # gv.figdir = gv.figdir + '/selectivity/pval_%.3f/%s/%s' % (kwargs['pval'], kwargs['tasks'][kwargs['i_task']], kwargs['stimulus']) 
-    gv.figdir = gv.figdir + '/selectivity/pval_%.3f/%s' % (kwargs['pval'], kwargs['stimulus']) 
+    # gv.figdir = gv.figdir + '/selectivity/pval_%.3f/%s/%s' % (kwargs['pval'], kwargs['tasks'][kwargs['i_task']], kwargs['stimulus'])
+    if kwargs['obj']=='score': 
+        gv.figdir = gv.figdir + '/decoder/%s/%s_k_fold/' % (kwargs['clf_name'], kwargs['fold_type']) 
+    else:
+        gv.figdir = gv.figdir + '/selectivity/pval_%.3f/%s' % (kwargs['pval'], kwargs['stimulus']) 
+        
+    # gv.figdir = gv.figdir + '/%s' % code 
     
-    gv.figdir = gv.figdir + '/%s' % code 
-            
     gv.figdir = gv.figdir + '/%s' % gv.mouse 
     
     if not os.path.isdir(gv.figdir): 
@@ -91,7 +94,7 @@ def plotFracSelBars(mean, errorbar=None, pval_shuffle=None, **kwargs):
         epochs = ['Early', 'Middle', 'Late']
     else:
         epochs = ['Sample', 'Distractor', 'Test']
-        
+    
     tasks = ['DPA', 'Dual Go', 'Dual NoGo'] 
     
     if not gv.inter_trials: 
