@@ -17,7 +17,7 @@ def set_globals(**opts):
     gv.last_days = opts['lastDays']
     gv.all_days = opts['allDays']
     
-    gv.inner_scoring = opts['inner_scoring']
+    gv.inner_scoring = opts['inner_score']
     
     # parameters 
     gv.mouse = gv.mice[opts['i_mice']] 
@@ -219,14 +219,16 @@ def set_options(**kwargs):
     opts['scaler_BL']= 'standard' # standard, robust, center
     opts['center_BL']= None 
     opts['scale_BL']= None 
+    opts['avg_mean_BL']=0
+    opts['avg_noise_BL']=1 
     
     opts['scaler']= 'standard' # standard, robust, center 
     opts['center']= None 
     opts['scale']= None 
     opts['return_center_scale'] = 0 
     
-    opts['avg_mean']=0 
-    opts['avg_noise']=0 
+    opts['avg_mean']=0
+    opts['avg_noise']=1 
     opts['unit_var']=0 
     
     # PCA parameters 
@@ -237,18 +239,38 @@ def set_options(**kwargs):
     opts['inflection'] = False 
     
     # classification parameters 
-    opts['clf']='logitnetAlphaCV' 
+    opts['clf_name']='logitnetAlphaCV' 
+    opts['clf'] = None
     # opts['clf'] = 'LogisticRegression' 
-    opts['scoring'] = 'roc_auc' # 'accuracy', 'f1', 'roc_auc'
-    opts['inner_scoring'] = 'deviance' # 'accuracy', 'f1', 'roc_auc' or 'neg_log_loss' 'r2' 
-    opts['inner_splits'] = 5 
+    opts['scoring'] = 'accuracy' # 'accuracy', 'f1', 'roc_auc'
+    opts['outer_score'] = 'accuracy' # 'accuracy', 'f1', 'roc_auc' 
+    opts['inner_score'] = 'deviance' # 'accuracy', 'f1', 'roc_auc' or 'neg_log_loss' 'r2' 
+    opts['inner_splits'] = 10 
+    opts['n_in'] = 10 
     
     # sklearn LogisticRegression, LogisticRegressionCV 
     opts['C']=1e2 
-    opts['Cs']=10 
-    opts['penalty']='l2' 
-    opts['solver']='liblinear' # liblinear or saga 
-    opts['l1_ratio'] = 0.5
+    opts['Cs'] = np.logspace(-4, 4, 10) 
+    opts['l1_ratios'] = np.linspace(0, 1, 10) 
+    opts['alphas'] = np.linspace(0, 1, 10) 
+    
+    # opts['param_grid'] = dict(clf__C=opts['Cs']) # this is important if using pipeline 
+    # opts['param_grid'] = dict(clf__C=opts['Cs'], clf__l1_ratio=opts['l1_ratios']) # this is important if using pipeline 
+    # opts['param_grid'] = dict(clf__alpha=opts['alphas']) # this is important if using pipeline 
+    
+    opts['n_alpha'] = 10 
+    opts['n_lambda'] = 10 
+    
+    opts['lbds'] = np.exp(np.linspace(-4, 1, opts['n_lambda']) ) 
+    
+    opts['alphas'] = np.linspace(0, 1, opts['n_alpha'])
+    
+    opts['param_grid'] = dict(lbd=opts['lbds'], alpha=opts['alphas']) # this is important if using pipeline 
+    # opts['param_grid'] = dict(clf__lbd=opts['lbds'], clf__alpha=opts['alphas']) # this is important if using pipeline 
+    
+    opts['penalty']='elasticnet' 
+    opts['solver']='saga' # liblinear or saga 
+    opts['l1_ratio'] = 0.5 
     
     # LDA
     opts['loss']='lsqr' 
@@ -256,15 +278,14 @@ def set_options(**kwargs):
 
     # LassoLarsIC
     opts['criterion']='bic'
-
-    opts['fit_intercept'] = False
-    opts['intercept_scaling']=1e2
+    
+    opts['fit_intercept'] = True 
+    opts['intercept_scaling']=1 
     
     # for glmnet only 
-    opts['n_splits'] = 5
+    opts['n_splits'] = 10 
+    opts['n_out'] = 10 
     opts['alpha'] = 0.5 
-    opts['n_alpha'] = 10 
-    opts['n_lambda'] = 10 
     opts['alpha_path']= None # -np.sort(-np.logspace(-4, -2, opts['Cs'])) 
     opts['min_lambda_ratio'] = 1e-4 
     opts['prescreen'] = False 
@@ -278,7 +299,7 @@ def set_options(**kwargs):
     # opts['shuffle'] = True 
     opts['random_state'] = None 
     opts['tol']=1e-4
-    opts['max_iter']= int(1e3) 
+    opts['max_iter']= int(1e4) 
     
     opts.update(kwargs) 
     # if opts['concatBins']==1:

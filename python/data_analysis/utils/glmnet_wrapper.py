@@ -8,10 +8,13 @@ import pandas as pd
 import scipy
 import scipy.stats as stats
 import numpy as np
-from sklearn.base import BaseEstimator, ClassifierMixin 
-from sklearn.metrics import roc_auc_score, accuracy_score, log_loss, mean_squared_error 
-from sklearn.model_selection import KFold, StratifiedKFold 
+
+from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.linear_model.base import LinearClassifierMixin, SparseCoefMixin
+from sklearn.metrics import roc_auc_score, accuracy_score, log_loss, mean_squared_error
+from sklearn.model_selection import KFold, StratifiedKFold, LeaveOneOut
 from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold, f_regression, mutual_info_classif, f_classif
+from sklearn.utils.extmath import safe_sparse_dot, softmax 
 
 from glmnet_python.glmnetSet import glmnetSet 
 
@@ -30,310 +33,376 @@ from joblib import Parallel, delayed
 
 from . import progressbar as pg
 
-class logitnet(BaseEstimator, ClassifierMixin): 
+def set_lbd(lbd): 
+    if isinstance(lbd, str): 
+        lbd = scipy.float64([1]) 
+    else: 
+        lbd = scipy.float64([lbd])
+        if lbd.shape == (1,1): 
+            lbd = lbd[0]
     
-    def __init__(self, alpha=1, n_lambda=20, lbd=1, scoring='accuracy',
-                 prescreen=False, standardize=True, fit_intercept=True, thresh=1e-4 , maxit=1e6):
-        
-        self.prescreen = prescreen
+    return lbd
 
-        if isinstance(lbd, str):
-            self.lbd = lbd
-        else:
-            self.lbd = scipy.float64([lbd]) 
+def set_score(scoring):
+                    
+    if 'accuracy' in scoring: 
+        scoring = 'class' 
+    if 'roc_auc' in scoring: 
+        scoring = 'auc' 
+    if ('log_loss' or 'neg_log_loss') in scoring: 
+        scoring = 'deviance' 
+    if ('mean_squared_error' or 'neg_mean_squared_error') in scoring: 
+        scoring = 'mse' 
+    
+    return scoring 
+
+def get_score(y, y_pred, scoring):
+    
+    if scoring=='accuracy': 
+        score =  accuracy_score(y, y_pred) 
+    if scoring=='roc_auc': 
+        score =  roc_auc_score(y, y_pred) 
+    if scoring=='log_loss': 
+        score = log_loss(y, y_pred) 
+    if scoring=='neg_log_loss': 
+        score = -log_loss(y, y_pred) 
+    if scoring=='mean_squared_error': 
+        score = mean_squared_error(y, y_pred) 
+    if scoring=='neg_mean_squared_error': 
+        score = -mean_squared_error(y, y_pred)  
+    
+    return score 
+    
+def pre_screen_fold(X, y, p_alpha=0.05, scoring=f_classif): 
+    ''' X is trials x neurons 
+    alpha is the level of significance 
+    scoring is the statistics, use f_classif or mutual_info_classif 
+    '''    
+    model = SelectKBest(score_func=scoring, k=X.shape[1])    
+    model.fit(X,y) 
+    pval = model.pvalues_.flatten() 
+    idx_out = np.argwhere(pval>p_alpha) 
+    X_screen = np.delete(X, idx_out, axis=1) 
+        
+    return X_screen
+
+def createFolds(X, y, fold_type='stratified', n_splits=10, random_state=None):
+    
+    if fold_type=='stratified': 
+        folds = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state) 
+    elif fold_type == 'kfold': 
+        folds = KFold(n_splits=n_splits, shuffle=True, random_state=random_state) 
+    elif fold_type=='loo':
+        folds = KFold(n_splits=X.shape[0], shuffle=True, random_state=random_state) 
+            
+    foldid = np.empty(y.shape[0]) 
+    i_split = -1 
+    for idx_train, idx_test in folds.split(X,y): 
+        i_split = i_split+1 
+        foldid[idx_test] = scipy.int32(i_split) 
+            
+    foldid = scipy.int32(foldid) 
+    
+    return foldid
+
+def set_options(alpha=1, n_lambda=10, standardize=True, fit_intercept=True, thresh=1e-4, maxit=10000, prescreen=False, f_screen=None):
+    
+    opts = dict() 
+    opts['alpha'] = scipy.float64(alpha) 
+    opts['nlambda'] = scipy.int32(n_lambda)         
+    # opts['lambdau'] = scipy.float64( np.exp(np.linspace(-4, 1, opts['nlambda']) ) ) 
+    # opts['lambdau'] = scipy.float64( np.logspace(-4, 4, n_lambda) ) 
+    # opts['lambdau'] = scipy.array( -np.sort(-np.logspace(np.log(0.5), np.log(0.01), n_lambda, base=np.exp(1)) ) ) 
+    
+    opts['standardize'] = standardize 
+    opts['intr'] = fit_intercept 
+    
+    opts['thresh'] = scipy.float64(thresh) 
+    opts['maxit'] = scipy.int32(maxit) 
+    
+    opts['prescreen'] = prescreen
+    opts['f_screen'] = f_screen 
+    
+    options = glmnetSet(opts) 
+        
+    return options 
+
+class logitnet(LinearClassifierMixin, SparseCoefMixin, BaseEstimator): 
+    
+    def __init__(self, alpha=1, n_lambda=10, lbd=1, scoring='accuracy',
+                 prescreen=False, f_screen='f_classif',
+                 standardize=True, fit_intercept=True,
+                 thresh=1e-4 , maxit=1e6, verbose=0): 
         
         self.alpha = alpha 
         self.n_lambda = n_lambda 
+        self.lbd = lbd 
+        
         self.scoring = scoring 
+        self.prescreen = prescreen 
+        self.f_screen = f_screen 
+        self.standardize = standardize 
         
         self.fit_intercept = fit_intercept 
         self.thresh = thresh 
         self.maxit = maxit 
-        
-        opts = dict() 
-        opts['alpha'] = scipy.float64(alpha) 
-        opts['nlambda'] = scipy.int32(n_lambda) 
-        
-        opts['standardize'] = standardize 
-        opts['intr'] = fit_intercept 
-        
-        opts['thresh'] = scipy.float64(thresh) 
-        opts['maxit'] = scipy.int32(maxit) 
-        
-        self.options = glmnetSet(opts) 
-
-    def pre_screen_fold(X, y, p_alpha=0.05, scoring=f_classif): 
-        ''' X is trials x neurons 
-        alpha is the level of significance 
-        scoring is the statistics, use f_classif or mutual_info_classif 
-        '''    
-        model = SelectKBest(score_func=scoring, k=X.shape[1])    
-        model.fit(X,y) 
-        pval = model.pvalues_.flatten() 
-        idx_out = np.argwhere(pval>p_alpha) 
-        X_screen = np.delete(X, idx_out, axis=1) 
-        
-        return X_screen
+        self.classes_ = np.array([-1, 1]) # useful if using cross_val_score 
+        self.verbose = verbose 
         
     def fit(self, X, y):
         
-        # if self.prescreen:
-        #     X = scipy.array( self.pre_screen_fold(X, y) ) 
+        self.lbd = set_lbd(self.lbd) 
+        
+        # self.scoring = set_score(self.scoring) 
+        
+        self.options = set_options(self.alpha, self.n_lambda, self.standardize, self.fit_intercept,
+                                   self.thresh, self.maxit, self.prescreen, self.f_screen) 
         
         model_ = glmnet(x = X.copy(), y = y.copy(), family = 'binomial', **self.options) 
-        self.model_ = model_ # for some reason I have to pass it like that a = funcnet() then self.a = a
-                
-        coefs = glmnetCoef(self.model_, s= scipy.float64([self.lbd]), exact=False) 
-        self.intercept_ = coefs[0] 
-        self.coef_ = coefs[1:] 
+        self.model_ = model_ # for some reason I have to pass it like that a = funcnet() then self.a = a 
+        
+        coefs = self.get_coefs() 
+        
+        if self.verbose:
+            print('alpha', self.alpha, 'lambda', self.lbd, 'coefs', coefs.shape) 
         
         return self 
     
-    def get_coefs(self, obj=None, lbd=None, exact=False):
-        coefs = glmnetCoef(self.model_, s=scipy.float64([self.lbd]), exact=exact) 
-        self.intercept_ = coefs[0] 
-        self.coef_ = coefs[1:] 
+    def get_coefs(self):
+        coefs = glmnetCoef(self.model_, s=self.lbd, exact=False) 
+        
+        if self.fit_intercept: 
+            self.intercept_ = coefs[0] 
+            self.coef_ = coefs[1:] 
+        else: 
+            self.intercept_ = None 
+            self.coef_ = coefs 
+
+        if self.coef_.shape[-1] == 1:
+            self.coef_ = self.coef_[:,0]
         
         return coefs 
     
     def predict(self, X): 
-        return glmnetPredict(self.model_, newx=X, ptype='class', s= scipy.float64([self.lbd]) ) 
+
+        y_pred = glmnetPredict(self.model_, newx=X, ptype='class', s=self.lbd )
+        # print(y_pred.shape) 
+        return y_pred[..., 0] 
+    
+        # scores = self.decision_function(X)
+        # if len(scores.shape) == 1:
+        #     indices = (scores > 0).astype(int)
+        # else:
+        #     indices = scores.argmax(axis=1)
+        # return self.classes_[indices]
     
     def predict_proba(self, X): 
-        return glmnetPredict(self.model_, newx=X, ptype='response', s= scipy.float64([self.lbd]) ) 
+        y_pred = glmnetPredict(self.model_, newx=X, ptype='response', s=self.lbd )
+        # print(y_pred.shape) 
+        return y_pred[..., 0] 
+    
+        # decision = self.decision_function(X) 
+        # if decision.ndim == 1: 
+        #         decision_2d = np.c_[-decision, decision] 
+        # else: 
+        #     decision_2d = decision 
+        # return softmax(decision_2d, copy=False)
     
     def score(self, X, y):
-        if self.scoring=='class' or self.scoring=='accuracy': 
+        
+        if self.scoring =='accuracy' or self.scoring=='mean_squared_error' or self.scoring=='neg_mean_squared_error' :
             y_pred = self.predict(X) 
-            return accuracy_score(y, y_pred) 
-        if self.scoring=='auc' or self.scoring=='roc_auc': 
+        else: 
             y_pred = self.predict_proba(X) 
-            return roc_auc_score(y, y_pred) 
-        if self.scoring=='deviance' or self.scoring=='log_loss': 
-            y_pred = self.predict_proba(X) 
-            return log_loss(y, y_pred) 
-        if self.scoring=='mse': 
-            y_pred = self.predict(X) 
-            return mean_squared_error(y, y_pred) 
+
+        if self.verbose:
+            print('y', y.shape, 'y_pred', y_pred.shape) 
+        
+        return get_score(y, y_pred, self.scoring) 
+    
+    def decision_function(self, X):
+        if self.verbose:
+            print('X', X.shape, 'coef_', self.coef_.shape, 'intercept_', self.intercept_.shape) 
+        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_ 
+        return scores.ravel() if scores.shape[-1] == 1 else scores 
     
 class logitnetCV(BaseEstimator, ClassifierMixin): 
     
-    def __init__(self, alpha=1, n_lambda=100, n_splits=10, standardize=False, fit_intercept=False, lbd ='lambda_1se',
-                 fold_type='kfold', shuffle=True, random_state=None, prescreen=True, f_screen='f_classif',
+    def __init__(self, alpha=0.5, n_lambda=10, n_splits=10, standardize=True, fit_intercept=True, lbd ='lambda_1se',
+                 fold_type='kfold', random_state=None, prescreen=False, f_screen='f_classif',
                  scoring='accuracy', thresh=1e-4 , maxit=1e6, n_jobs=1):
-
-        opts = dict() 
-        opts['alpha'] = scipy.float64(alpha) 
-        opts['nlambda'] = scipy.int32(n_lambda) 
-        opts['lambdau'] = scipy.array( -np.sort(-np.logspace(np.log(0.5), np.log(0.01), opts['nlambda'], base=np.exp(1)) ) ) 
         
-        opts['standardize'] = standardize 
-        opts['intr'] = fit_intercept 
-        
-        opts['thresh'] = scipy.float64(thresh) 
-        opts['maxit'] = scipy.int32(maxit) 
-        
-        opts['prescreen'] = prescreen
-        opts['f_screen'] = f_screen 
-        
+        self.alpha = scipy.float64(alpha)
+        self.n_lambda = scipy.int32(n_lambda)
         self.lbd = lbd 
-        self.options = glmnetSet(opts) 
-        self.scoring = scoring # 'deviance', 'class', 'auc', 'mse' or 'mae'
         
-        if 'accuracy' in scoring: 
-            self.scoring = 'class' 
-        if 'roc_auc' in scoring: 
-            self.scoring = 'auc' 
-        if 'log_loss' in scoring: 
-            self.scoring = 'deviance' 
-
-        self.fold_type = fold_type 
-        self.shuffle = shuffle 
-        self.random_state = random_state 
         self.n_splits = scipy.int32(n_splits) 
-        self.n_jobs = n_jobs 
         
+        self.standardize = standardize 
+        self.fit_intercept = fit_intercept 
+        
+        self.scoring = scoring # 'deviance', 'class', 'auc', 'mse' or 'mae' 
+        
+        self.fold_type = fold_type 
+        self.random_state = random_state
+        
+        self.prescreen = prescreen
+        self.f_screen = f_screen
+        
+        self.thresh = scipy.float64(thresh)
+        self.maxit = scipy.int32(maxit)
+        
+        self.n_jobs = n_jobs 
+                
     def fit(self, X, y): 
         
-        if self.fold_type=='stratified': 
-            folds = StratifiedKFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_state) 
-        else: 
-            folds = KFold(n_splits=self.n_splits, shuffle=self.shuffle, random_state=self.random_state) 
-            
-        foldid = np.empty(y.shape[0]) 
-        i_split = -1 
-        for idx_train, idx_test in folds.split(X,y):
-            i_split = i_split+1 
-            foldid[idx_test] = scipy.int32(i_split)
-            
-        foldid = scipy.int32(foldid)
+        self.scoring = set_score(self.scoring) 
         
-        model_ = cvglmnet(x = X.copy(), y = y.copy(), family = 'binomial', ptype = self.scoring, foldid=foldid,
-                          nfolds=self.n_splits, n_jobs=self.n_jobs, **self.options) 
+        self.options = set_options(self.alpha, self.n_lambda, self.standardize, self.fit_intercept,
+                                   self.thresh, self.maxit, self.prescreen, self.f_screen)
         
-        self.model_ = model_ # for some reason I have to pass it like that a = funcnet() then self.a = a 
+        foldid = createFolds(X, y, self.fold_type, self.n_splits, self.random_state) 
         
-        cv_mean_score = model_['cvm'] 
-        cv_standard_error = model_['cvsd'] 
-        lbd_min_ = model_['lambda_min']  
-        lbd_1se_ = model_['lambda_1se'] 
+        self.model_ = cvglmnet(x = X.copy(), y = y.copy(), family = 'binomial',
+                               ptype = self.scoring,
+                               foldid=foldid, n_jobs=self.n_jobs, **self.options) 
         
-        self.cv_mean_score_ = cv_mean_score 
-        self.cv_standard_error_ = cv_standard_error         
+        # self.model_ = model_ # for some reason I have to pass it like that a = funcnet() then self.a = a 
         
-        self.lbd_min_ = lbd_min_
-        self.lbd_1se_ = lbd_1se_
+        self.lbd_min_ = self.model_['lambda_min']  
+        self.lbd_1se_ = self.model_['lambda_1se']
         
-        self.alpha_ = self.options['alpha'] # for compatibility only 
+        self.non_zero = self.model_['nzero'][ self.model_['lambdau'] == self.model_[self.lbd] ] 
         
-        if self.lbd == 'lambda_1se':
-            coef_ = cvglmnetCoef(self.model_, s='lambda_1se')[1:]
+        coefs = self.get_coefs() 
+        
+        return self
+    
+    def get_coefs(self):
+        coefs = cvglmnetCoef(self.model_, s=self.lbd) 
+        if self.fit_intercept: 
+            self.coefs_ = coefs[1:] 
+            self.intercept_ = coefs[0] 
         else:
-            coef_ = cvglmnetCoef(self.model_, s='lambda_min')[1:] 
-        self.coef_ = coef_ 
+            self.coefs_ = coefs
+            self.intercept_ = None 
         
-        return self 
+        return coefs 
     
     def lasso_path(self): 
         cvglmnetPlot(self.model_) 
-
-    def predict(self, X):
-        if self.lbd == 'lambda_1se':
-            return cvglmnetPredict(self.model_, newx=X, ptype='class', s = 'lambda_1se' ) 
-        else:
-            return cvglmnetPredict(self.model_, newx=X, ptype='class', s = 'lambda_min' ) 
-            
-    def predict_proba(self, X, lbd=None): 
-        if self.lbd == 'lambda_1se':
-            return cvglmnetPredict(self.model_, newx=X, ptype='response', s = 'lambda_1se' ) 
-        else:
-            return cvglmnetPredict(self.model_, newx=X, ptype='response', s = 'lambda_min' ) 
+        return self 
     
-    def score(self, X, y): 
+    def predict(self, X):
+        return cvglmnetPredict(self.model_, newx=X, ptype='class', s=self.lbd) 
+    
+    def predict_proba(self, X): 
+        return cvglmnetPredict(self.model_, newx=X, ptype='response', s=self.lbd) 
+    
+    def score(self, X, y, scoring=None):
+        if scoring is not None:
+            self.scoring = set_score(scoring)
+        else:
+            self.scoring = set_score(self.scoring) 
         
-        if self.scoring=='class' or self.scoring=='accuracy': 
+        if self.scoring =='class' or self.scoring=='mse':
             y_pred = self.predict(X) 
-            return accuracy_score(y, y_pred) 
-        if self.scoring=='auc' or self.scoring=='roc_auc' : 
+        else:
             y_pred = self.predict_proba(X) 
-            return roc_auc_score(y, y_pred) 
-        if self.scoring=='deviance' or self.scoring=='log_loss': 
-            y_pred = self.predict_proba(X) 
-            return log_loss(y, y_pred) 
-        if self.scoring=='mse': 
-            y_pred = self.predict(X) 
-            return mean_squared_error(y, y_pred)
         
+        return get_score(y, y_pred, self.scoring) 
+    
 class logitnetAlphaCV(BaseEstimator, ClassifierMixin): 
     
-    def __init__(self, n_alpha=10, n_lambda=100, lbd='lbd_1se', 
-                 n_splits=10, fold_type='kfold', scoring='accuracy', 
-                 standardize=False, fit_intercept=False, 
-                 prescreen=True, f_screen='f_classif', 
-                 thresh=1e-4 , maxit=1e6, n_jobs=1, verbose=True): 
+    def __init__(self, n_alpha=10, n_lambda=10, lbd='lbd_1se', 
+                 n_splits=10, fold_type='loo', scoring='accuracy', 
+                 standardize=True, fit_intercept=True, 
+                 prescreen=False, f_screen='f_classif', 
+                 thresh=1e-4 , maxit=1e6, n_jobs=None, verbose=True): 
         
-        opts = dict() 
-        opts['nlambda'] = scipy.int32(n_lambda) 
-        # opts['lambdau']= scipy.array( -np.sort(-np.logspace(-4, -1, opts['nlambda'])) )  
-        # opts['lambdau'] = scipy.array( -np.sort(-np.logspace(np.log(0.5), np.log(0.01), opts['nlambda'], base=np.exp(1)) ) )
+        self.n_alpha = scipy.int32(n_alpha) 
+        self.alpha_path = np.linspace(0, 1, n_alpha) 
         
-        opts['standardize'] = standardize 
-        opts['intr'] = fit_intercept 
-        opts['prescreen'] = prescreen
-        opts['f_screen'] = f_screen 
-        
-        opts['thresh'] = scipy.float64(thresh) 
-        opts['maxit'] = scipy.int32(maxit) 
-        
-        self.options = glmnetSet(opts)                
-        
-        self.n_alpha = n_alpha 
-        self.alpha_path = np.linspace(0.1, 1, n_alpha) 
-        
-        self.lbd = lbd
-        self.n_lambda = n_lambda
+        self.n_lambda = scipy.int32(n_lambda) 
+        # self.lambda_path = np.logspace(-4, 4, n_lambda) 
+        self.lbd = lbd 
         
         self.n_splits = scipy.int32(n_splits) 
         self.fold_type = fold_type 
         
-        self.scoring = scoring # 'deviance', 'class', 'auc', 'mse' or 'mae'         
-        if 'accuracy' in scoring: 
-            self.scoring = 'class'  
-        if 'roc_auc' in scoring: 
-            self.scoring = 'auc' 
-        if 'log_loss' in scoring: 
-            self.scoring = 'deviance' 
-                    
-        self.n_jobs = n_jobs 
-        self.verbose = verbose 
+        self.scoring = scoring # 'deviance', 'class', 'auc', 'mse' or 'mae' 
         
-    def createFolds(self, X, y):
-        # fixed seed accross alphas 
-        self.random_state = np.random.randint(1e6) 
+        self.standardize = standardize 
+        self.fit_intercept = fit_intercept 
         
-        if self.fold_type=='stratified':
-            folds = StratifiedKFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state) 
-        else: 
-            folds = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state) 
-            
-        foldid = np.empty(y.shape[0]) 
-        i_split = -1 
-        for idx_train, idx_test in folds.split(X,y): 
-            i_split = i_split+1 
-            foldid[idx_test] = scipy.int32(i_split) 
-            
-        foldid = scipy.int32(foldid) 
+        self.prescreen = prescreen 
+        self.f_screen = f_screen 
         
-        return foldid
-    
-    def fit(self, X, y):
+        self.thresh = scipy.float64(thresh) 
+        self.maxit = scipy.int32(maxit) 
+
+        self.n_jobs = n_jobs         
+        self.verbose= verbose 
         
-        # generate folds 
-        self.foldid = self.createFolds(X,y) 
+    def fit(self, X, y): 
+
+        self.scoring = set_score(self.scoring) 
+        
+        self.options = set_options(self.alpha, self.n_lambda, self.standardize, self.fit_intercept,
+                                   self.thresh, self.maxit, self.prescreen, self.f_screen)
+        
+        foldid = createFolds(X, y, self.fold_type, self.n_splits, self.random_state) 
         
         # fit each model along the alpha path 
         with pg.tqdm_joblib(pg.tqdm(desc='alpha path', total= int(self.n_alpha * (self.n_splits+1) ), disable=not self.verbose) ) as progress_bar: 
-            dum = Parallel(n_jobs=self.n_jobs)(delayed(self.fitFixedAlpha)(X, y, i_alpha, self.alpha_path, self.foldid, self.options) 
-                                               for i_alpha in range(self.n_alpha) )
+            dum = Parallel(n_jobs=self.n_jobs)(delayed(self.fitFixedAlpha)(X, y, i_alpha, self.alpha_path, foldid, self.options) 
+                                               for i_alpha in range(self.n_alpha) ) 
         
         self.models_ = scipy.array(dum) 
-        if self.verbose:
+        if self.verbose: 
             print('models', self.models_.shape) 
-            
-        # compute min score
+        
+        # compute min score 
         with pg.tqdm_joblib(pg.tqdm(desc='cvm min', total= int(self.n_alpha) , disable=not self.verbose ) ) as progress_bar: 
             dum = Parallel(n_jobs=self.n_jobs)(delayed(self.minScoreAlpha)(self.models_[i_alpha]) for i_alpha in range(self.n_alpha) ) 
         self.cvms_min = scipy.array(dum) 
         
         self.idx_alpha_min_ = np.argmin(self.cvms_min) 
-        self.alpha_ = self.alpha_path[self.idx_alpha_min_]
+        self.alpha_ = self.alpha_path[self.idx_alpha_min_] 
         
-        self.model_= self.models_[self.idx_alpha_min_]         
+        self.model_= self.models_[self.idx_alpha_min_] 
         self.lbd_1se_ = self.model_['lambda_1se'] 
         self.lbd_min_ = self.model_['lambda_min'] 
         
-        self.non_zero_1se = self.model_['nzero'][ self.model_['lambdau'] == self.model_['lambda_1se'] ]
-        self.non_zero_min = self.model_['nzero'][ self.model_['lambdau'] == self.model_['lambda_min'] ]
+        self.non_zero_1se = self.model_['nzero'][ self.model_['lambdau'] == self.model_['lambda_1se'] ] 
+        self.non_zero_min = self.model_['nzero'][ self.model_['lambdau'] == self.model_['lambda_min'] ] 
         
         if self.verbose:
             print('non zero min', self.non_zero_min, 'non zero 1se', self.non_zero_1se) 
-        
-        if self.lbd == 'lambda_1se':
-            coef_ = cvglmnetCoef(self.model_, s='lambda_1se')[1:]
-        else:
-            coef_ = cvglmnetCoef(self.model_, s='lambda_min')[1:] 
-            
-        self.coef_ = coef_ 
+
+        coefs = get_coefs()
         
         return self 
-    
+            
+    def get_coefs(self):
+        coefs = cvglmnetCoef(self.model_, s=self.lbd) 
+        if self.fit_intercept: 
+            self.coefs_ = coefs[1:] 
+            self.intercept_ = coefs[0] 
+        else:
+            self.coefs_ = coefs
+            self.intercept_ = None 
+        
+        return coefs 
+            
     def fitFixedAlpha(self, X, y, i_alpha, alpha_path, foldid, options): 
         
         opts = options.copy() 
         opts['alpha'] = alpha_path[i_alpha] 
         
-        model_ = cvglmnet(x = X.copy(), y = y.copy(), family = 'binomial', ptype = self.scoring, foldid=foldid,
-                          nfolds=self.n_splits, n_jobs=self.n_jobs, **opts) 
+        model_ = cvglmnet(x = X.copy(), y = y.copy(), family = 'binomial',
+                          ptype = self.scoring, foldid=foldid,
+                          n_jobs=self.n_jobs, **opts) 
         return model_ 
     
     def minScoreAlpha(self, model_): 
@@ -345,36 +414,25 @@ class logitnetAlphaCV(BaseEstimator, ClassifierMixin):
     
     def lasso_path(self): 
         cvglmnetPlot(self.model_) 
-        
+
+        return self
+    
     def predict(self, X): 
-        if self.lbd == 'lambda_1se': 
-            return cvglmnetPredict(self.model_, newx=X, ptype='class', s = 'lambda_1se' ) 
-        else: 
-            return cvglmnetPredict(self.model_, newx=X, ptype='class', s = 'lambda_min' ) 
+        return cvglmnetPredict(self.model_, newx=X, ptype='class', s=self.lbd ) 
             
     def predict_proba(self, X): 
-        if self.lbd == 'lambda_1se': 
-            return cvglmnetPredict(self.model_, newx=X, ptype='response', s='lambda_1se' ) 
-        else: 
-            return cvglmnetPredict(self.model_, newx=X, ptype='response', s='lambda_min' ) 
-    
-    def score(self, X, y): 
-        if self.scoring=='class' or self.scoring=='accuracy': 
-            y_pred = self.predict(X) 
-            return accuracy_score(y, y_pred)
-        
-        if self.scoring=='auc' or self.scoring=='roc_auc': 
-            y_pred = self.predict_proba(X) 
-            return roc_auc_score(y, y_pred)
-        
-        if self.scoring=='deviance' or self.scoring=='log_loss':  
-            y_pred = self.predict_proba(X) 
-            return log_loss(y, y_pred)
-        
-        if self.scoring=='mse': 
-            y_pred = self.predict(X) 
-            return mean_squared_error(y, y_pred) 
+        return cvglmnetPredict(self.model_, newx=X, ptype='response', s=self.lbd) 
 
+    def score(self, X, y):
+        self.scoring = set_score(self.scoring) 
+        
+        if self.scoring =='class' or self.scoring=='mse':
+            y_pred = self.predict(X) 
+        else:
+            y_pred = self.predict_proba(X) 
+        
+        return get_score(y, y_pred, self.scoring) 
+    
 class logitnetIterCV(BaseEstimator, ClassifierMixin): 
     
     def __init__(self, n_iter=100, alpha=1, n_lambda=100, lbd='lbd_1se', 
@@ -625,7 +683,7 @@ class logitnetAlphaIterCV(BaseEstimator, ClassifierMixin):
         opts = options.copy() 
         opts['alpha'] = alpha_path[i_alpha] 
         
-        model_ = cvglmnet(x = X.copy(), y = y.copy(), family = 'binomial',ptype = self.scoring, foldid=foldid, grouped=True,
+        model_ = cvglmnet(x = X.copy(), y = y.copy(), family = 'binomial', ptype = self.scoring, foldid=foldid, grouped=True,
                           nfolds=self.n_splits, n_jobs=self.n_jobs, **opts)
         
         df = pd.DataFrame({ 'i_alpha': i_alpha, 
