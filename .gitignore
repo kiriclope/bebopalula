@@ -16,3 +16,6 @@ data_analysis_bak/
 *~
 *.out
 *.#
+*.gz
+*.tar
+*.zip
