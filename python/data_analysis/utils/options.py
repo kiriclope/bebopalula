@@ -46,40 +46,17 @@ def set_globals(**opts):
     gv.n_days = opts['n_days'] 
     
     gv.SAME_DAYS = opts['same_days']
-    gv.cos_trials = opts['cos_trials']
-    gv.scores_trials = opts['scores_trials']
-    gv.inter_trials = opts['inter_trials'] 
+    # gv.cos_trials = opts['cos_trials']
+    # gv.scores_trials = opts['scores_trials']
+    # gv.inter_trials = opts['inter_trials'] 
     
-    if not opts['inter_trials']: 
-        # gv.pal = ['#ff00ff','#ffff00','#00ffff'] 
-        gv.pal = ['black', 'dimgray', 'lightgray'] 
-    else: 
-        gv.pal = ['r','b','y','k'] 
+    # gv.pal = ['#ff00ff','#ffff00','#00ffff'] 
+    # gv.pal = ['black', 'dimgray', 'lightgray'] 
     
     # preprocessing
-    gv.DECONVOLVE= opts['DCV']
-    gv.DCV_THRESHOLD = opts['DCV_TH']
-    
-    gv.F0_THRESHOLD = opts['F0_TH']
-    gv.AVG_F0_TRIALS = opts['F0_AVG_TRIALS']
-    
-    gv.Z_SCORE = opts['Z_SCORE']
-    gv.Z_SCORE_BL = opts['Z_SCORE_BL']
-    gv.Z_SCORE_TRIALS = opts['Z_SCORE_TRIALS'] 
-    gv.NORMALIZE = opts['NORM'] 
-    gv.NORMALIZE_TRIALS = opts['NORM_TRIALS'] 
-
     gv.standardize = opts['scaler']
     
-    gv.DETREND = opts['detrend'] # detrend the data 
-    gv.DETREND_ORDER = opts['order'] # detrend the data 
-    gv.SAVGOL = opts['savgol'] # sav_gol filter 
-
     gv.T_WINDOW = opts['T_WINDOW'] 
-    gv.EDvsLD = opts['EDvsLD'] 
-    gv.CONCAT_BINS = opts['concatBins']
-    gv.ED_MD_LD = opts['ED_MD_LD'] 
-    gv.DELAY_ONLY = 0 
 
     # feature selection 
     gv.FEATURE_SELECTION = 0 
@@ -88,24 +65,17 @@ def set_globals(**opts):
     # bootstrap 
     gv.n_boots = opts['n_boots'] 
     gv.bootstrap_method = opts['bootstrap_method'] 
-    gv.bootstrap_cos = opts['boot_cos'] 
-    gv.n_cos_boots = opts['n_cos_boots'] 
-
-    gv.correct_trial = opts['correct_trials']
-    gv.pair_trials = opts['pair_trials']    
     
     # temporal decoder
-    gv.my_decoder = opts['my_decoder']
     gv.fold_type = opts['fold_type']
     gv.n_iter = opts['n_iter']
     
     # classification parameters 
     gv.clf_name = opts['clf'] 
-    gv.scoring = opts['scoring'] 
-    gv.TIBSHIRANI_TRICK = 0  
-
+    # gv.scoring = opts['scoring'] 
+    
     # dimensionality reduction 
-
+    
     # PCA parameters
     gv.AVG_BEFORE_PCA = 1 
     gv.pca_model = opts['pca_model'] # PCA, sparsePCA, supervisedPCA or None
@@ -113,7 +83,7 @@ def set_globals(**opts):
     gv.n_components = opts['n_comp']
     gv.list_n_components = None 
     gv.inflection = opts['inflection']
-
+    
     gv.sparse_alpha = 1 
     gv.ridge_alpha = .01
     
@@ -166,12 +136,12 @@ def set_options(**kwargs):
     opts['i_epoch'] = 0
     opts['i_task'] = 0 
     opts['task'] = 'DPA' # DPA, DualGo, DualNoGo, Dual, or all 
-    opts['n_days'] = 6
+    opts['n_days'] = 9
     
     opts['same_days'] = 1 
     opts['laser']=0 
 
-    opts['feature_sel'] = 'ttest_ind' # 'ttest_ind' or 'lasso' 
+    opts['feature_sel'] = 'lasso' # 'ttest_ind' or 'lasso' 
     # bootstrap
     opts['boots'] = False 
     opts['n_boots'] = int(1e3) 
@@ -179,40 +149,17 @@ def set_options(**kwargs):
     opts['boot_cos'] = 0 
     opts['n_cos_boots'] = int(1e3) 
     
-    opts['cos_trials']=0
-    opts['correct_trials']=0
-    opts['pair_trials']=0
-
     # temporal decoder 
-    opts['inter_trials'] = 1 
-    opts['scores_trials'] = 0 
     opts['n_iter'] = 1 
-    opts['my_decoder'] = 0 
     opts['fold_type'] = 'stratified' 
     
     # preprocessing parameters 
     opts['T_WINDOW'] = 0.5 
-    opts['EDvsLD'] = 1 # average over epochs ED, MD and LD 
     
     opts['epochs'] = ['ED', 'MD', 'LD']
     # opts['epochs'] = ['STIM', 'DIST', 'LD'] 
     
-    opts['concatBins'] = ''    
-    opts['ED_MD_LD'] = 0     
-    opts['savgol'] = 0 # sav_gol filter 
-    
-    opts['DCV']=0 
-    opts['DCV_TH']=0.5 
-    
-    opts['F0_TH']=None 
-    opts['F0_AVG_TRIALS'] = 0
-    
-    opts['Z_SCORE'] = 0 
-    opts['Z_SCORE_BL'] = 0 
-    opts['Z_SCORE_TRIALS'] = 0 
-    opts['NORM'] = 0 
-    opts['NORM_TRIALS'] = 0 
-    
+    opts['savgol'] = 0 # sav_gol filter             
     opts['detrend'] = 0 # detrend the data 
     opts['order'] = 3
     
@@ -239,70 +186,55 @@ def set_options(**kwargs):
     opts['inflection'] = False 
     
     # classification parameters 
-    opts['clf_name']='logitnetAlphaCV' 
-    opts['clf'] = None
-    # opts['clf'] = 'LogisticRegression' 
-    opts['scoring'] = 'accuracy' # 'accuracy', 'f1', 'roc_auc'
-    opts['outer_score'] = 'accuracy' # 'accuracy', 'f1', 'roc_auc' 
-    opts['inner_score'] = 'deviance' # 'accuracy', 'f1', 'roc_auc' or 'neg_log_loss' 'r2' 
-    opts['inner_splits'] = 10 
-    opts['n_in'] = 10 
+    opts['clf_name'] = 'logitnetCV' 
+    opts['clf'] = None 
     
-    # sklearn LogisticRegression, LogisticRegressionCV 
-    opts['C']=1e2 
-    opts['Cs'] = np.logspace(-4, 4, 10) 
-    opts['l1_ratios'] = np.linspace(0, 1, 10) 
-    opts['alphas'] = np.linspace(0, 1, 10) 
-    
-    # opts['param_grid'] = dict(clf__C=opts['Cs']) # this is important if using pipeline 
-    # opts['param_grid'] = dict(clf__C=opts['Cs'], clf__l1_ratio=opts['l1_ratios']) # this is important if using pipeline 
-    # opts['param_grid'] = dict(clf__alpha=opts['alphas']) # this is important if using pipeline 
-    
-    opts['n_alpha'] = 10 
-    opts['n_lambda'] = 10 
-    
-    opts['lbds'] = np.exp(np.linspace(-4, 1, opts['n_lambda']) ) 
-    
-    opts['alphas'] = np.linspace(0, 1, opts['n_alpha'])
-    
-    opts['param_grid'] = dict(lbd=opts['lbds'], alpha=opts['alphas']) # this is important if using pipeline 
-    # opts['param_grid'] = dict(clf__lbd=opts['lbds'], clf__alpha=opts['alphas']) # this is important if using pipeline 
-    
-    opts['penalty']='elasticnet' 
-    opts['solver']='saga' # liblinear or saga 
-    opts['l1_ratio'] = 0.5 
-    
-    # LDA
-    opts['loss']='lsqr' 
-    opts['shrinkage']='auto'
-
-    # LassoLarsIC
-    opts['criterion']='bic'
+    # sklearn LogisticRegression, LogisticRegressionCV
+    opts['random_state'] = None 
+    opts['tol']=1e-4 
+    opts['max_iter']= int(1e2) 
     
     opts['fit_intercept'] = True 
-    opts['intercept_scaling']=1 
+    opts['intercept_scaling'] = 1
+
+    opts['off_diag'] = False 
+    opts['t_train'] = 'ED' 
     
-    # for glmnet only 
-    opts['n_splits'] = 10 
-    opts['n_out'] = 10 
-    opts['alpha'] = 0.5 
-    opts['alpha_path']= None # -np.sort(-np.logspace(-4, -2, opts['Cs'])) 
+    opts['C']=1e2 
+    opts['Cs'] = np.logspace(-4, 4, 10) 
+    opts['penalty']='l2' 
+    opts['solver']='liblinear' # liblinear or saga 
+    opts['l1_ratios'] = np.linspace(0, 1, 10)         
+    opts['l1_ratio'] = None 
+    opts['param_grid'] = dict(clf__C=opts['Cs']) # this is important if using pipeline 
+    # opts['param_grid'] = dict(clf__C=opts['Cs'], clf__l1_ratio=opts['l1_ratios']) # this is important if using pipeline                 
+    
+    opts['alpha'] = .5 
+    opts['n_alpha'] = 10 
+    opts['alphas'] = np.linspace(0, 1, opts['n_alpha']) 
+    
+    opts['lbd'] = 'lambda_min' 
+    opts['n_lambda'] = 10 
+    opts['lbds'] = np.exp(np.linspace(-10, 0, opts['n_lambda']) ) 
     opts['min_lambda_ratio'] = 1e-4 
-    opts['prescreen'] = False 
     
-    opts['lbd'] = 'lambda_1se' 
+    opts['standardize'] = True 
+    opts['prescreen'] = True 
     
-    opts['off_diag']=True     
-    opts['lambda_path']= None # -np.sort(-np.linspace(-3, -1, opts['Cs'])) 
-    opts['cut_point']=1 
+    if opts['clf_name']=='logitnet': 
+        opts['param_grid'] = dict(lbd=opts['lbds'], alpha=opts['alphas']) 
     
-    # opts['shuffle'] = True 
-    opts['random_state'] = None 
-    opts['tol']=1e-4
-    opts['max_iter']= int(1e4) 
+    if opts['clf_name']=='logitnetCV': 
+        opts['param_grid'] = dict(alpha=opts['alphas']) 
+    
+    opts['out_fold'] = 'repeated' 
+    opts['n_out'] = 10 
+    opts['outer_score']= 'roc_auc' 
+    
+    opts['in_fold'] = 'stratified' 
+    opts['n_in'] = 10 
+    opts['inner_score']= 'neg_log_loss' 
     
     opts.update(kwargs) 
-    # if opts['concatBins']==1:
-    #     opts['EDvsLD']=0
     
     return opts 

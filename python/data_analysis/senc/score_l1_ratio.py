@@ -3,6 +3,10 @@ import inspect, sys, os
 import numpy as np 
 import matplotlib.pyplot as plt
 
+from sklearn.feature_selection import f_classif, SelectPercentile, SelectFpr 
+from sklearn.pipeline import Pipeline 
+from sklearn.preprocessing import StandardScaler, RobustScaler 
+
 import warnings
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -51,7 +55,7 @@ def cv_score_l1_ratio(**kwargs):
     y = np.hstack((np.zeros(X_S1.shape[0]), np.ones(X_S2.shape[0]) )) 
     
     alphas = np.linspace(0, 1, kwargs['n_alpha']) 
-        
+
     for i_epochs in range(X_S1.shape[-1]): 
         
         scores = [] 
@@ -59,59 +63,34 @@ def cv_score_l1_ratio(**kwargs):
         
         X = X_S1_S2[:,:,i_epochs] 
         random_state = int(np.random.rand()*1000) 
+        clf.random_state = random_state # same random_state for each values of alpha 
+        # clf.verbose=1 
         
-        clf.random_state = random_state 
+        # clf.n_lambda = 20 
+        # clf.alpha = 1 
+        
+        # clf.fit(X, y) 
+        # plt.figure() 
+        # clf.lasso_path() 
         
         for i_alpha in range(len(alphas)): 
             
-            # plt.figure() 
             clf.alpha = alphas[i_alpha] 
-            # clf.alpha = 1 
-            clf.n_jobs = -1 
             
-            # clf.fit(X, y) 
-            # clf.lasso_path() 
-            # model_ = clf.model_ 
-            # idx_lbd_min = model_['lambdau'] == model_['lambda_min'] 
+            if kwargs['clf_name'] == 'logitnetCV' :
+                score = outer_cv(clf, X, y,
+                                 n_out = kwargs['n_out'], folds=kwargs['out_fold'],
+                                 inner_score=kwargs['inner_score'], outer_score = kwargs['outer_score'],
+                                 random_state = random_state) 
             
-            # lbd_min = model_['lambdau'][idx_lbd_min] 
-            # score = model_['cvm'][idx_lbd_min] 
-            
-            # print('epoch', i_epochs, 'alpha', alphas[i_alpha], 'score', score, 'lbd', lbd_min) 
-            
-            # scores.append(score) 
-
-            # grid = inner_cv(clf, X, y, kwargs['param_grid'], scaling='standard', n_in=kwargs['n_in'], n_jobs=-1) 
-            
-            score = outer_cv(clf, X, y,
-                             n_out = kwargs['n_out'], folds=kwargs['fold_type'],
-                             inner_score=kwargs['inner_score'], outer_score = kwargs['outer_score'],
-                             random_state = random_state) 
+            if kwargs['clf_name'] == 'logitnet' :
+                score = nested_cv(clf, X, y, kwargs['param_grid'], scaling='standard', 
+                                  in_fold=kwargs['in_fold'], n_in=kwargs['n_in'], in_score=kwargs['inner_score'], 
+                                  out_fold=kwargs['out_fold'], n_out=kwargs['n_out'], out_score=kwargs['outer_score'], 
+                                  fix_hyper=0, random_state=random_state, n_jobs=-1) 
             
             scores.append( score ) 
             print('epoch', i_epochs, 'alpha', alphas[i_alpha], 'score', score) 
-            
-            #     if kwargs['ci']:
-            #         clf.n_jobs = None
-            #         ci = my_bootstraped_ci(X_S1[..., i_epochs], X_S2[..., i_epochs],
-            #                                statfunction=lambda x1,x2: outer_cv(clf, np.vstack((x1,x2)), y,
-            #                                                                    n_out = kwargs['n_out'],
-            #                                                                    folds=kwargs['fold_type'],
-            #                                                                    inner_score=kwargs['inner_score'],
-            #                                                                    outer_score=kwargs['outer_score'],
-            #                                                                    random_state = random_state),
-            #                                n_samples=options['n_samples']) 
-            
-            #         # shuffle.append(shuffle_stat(X_S1, X_S2, lambda x1,x2: outer_cv(clf, np.vstack((x1,x2)), y,
-            #         #                                                                folds=kwargs['fold_type']),
-            #         #                             n_samples=options['n_shuffles'] ).T )
-            
-            
-            #         ci_list = [item for sublist in ci for item in sublist] 
-            
-            #         conf_int.append( ci_list ) 
-            
-            #         print('epoch', i_epochs, 'alpha', alphas[i_alpha], 'score', score, 'ci', ci_list) 
         
         plt.figure('score') 
         plt.plot(alphas, scores) 
@@ -136,34 +115,47 @@ if __name__ == '__main__':
     kwargs['n_samples'] = 1000 
     
     kwargs['scaler'] = 'standard' 
-    kwargs['scaler_BL'] = 'standard' 
+    kwargs['scaler_BL'] = 'robust' 
     kwargs['avg_mean_BL'] = 0 
     kwargs['avg_noise_BL'] = 1 
     
-    kwargs['clf_name'] = 'logitnetCV' 
     kwargs['T_WINDOW'] = 0.5 
     
     if(len(sys.argv)>1): 
         kwargs['i_mice'] = int(sys.argv[1]) 
         kwargs['task'] = sys.argv[2] 
-        kwargs['day'] = sys.argv[3]
+        kwargs['day'] = sys.argv[3] 
         kwargs['trials'] = sys.argv[4] 
     
     kwargs['n_alpha'] = 20 
-    kwargs['n_out'] = 40 
-    kwargs['n_in'] = 10 
-    kwargs['n_lambda'] = 20 
+    kwargs['n_lambda'] = 40 
+    kwargs['lbd'] = 1 # 'lambda_min' 
     
-    kwargs['lbd'] = 'lambda_min' 
-    kwargs['fold_type'] = 'stratified' 
-    kwargs['inner_score']= 'accuracy' 
+    kwargs['out_fold'] = 'stratified' 
+    kwargs['n_out'] = 10 
     kwargs['outer_score']= 'accuracy' 
     
+    kwargs['in_fold'] = 'stratified' 
+    kwargs['n_in'] = 10 
+    kwargs['inner_score']= 'neg_log_loss' 
+    
+    kwargs['clf_name'] = 'logitnet' 
+    kwargs['prescreen'] = False 
+    
+    # kwargs['lbds'] = np.exp(np.linspace(-4, 4, kwargs['n_lambda']) ) 
+    kwargs['lbds'] = np.logspace(-4, 2, kwargs['n_lambda'])    
+    kwargs['param_grid'] = dict(lbd=kwargs['lbds']) 
+    
     options = set_options(**kwargs) 
-    set_globals(**options)    
+    set_globals(**options) 
     
     options['clf'] = get_clf(**options) 
     print('clf', options['clf']) 
+    # options['clf'].standardize = True
     
-    cv_score_l1_ratio(**options)     
+    options['clf'] = Pipeline([('scaler', StandardScaler()), ('clf', options['clf'])]) 
+    # options['clf'] = Pipeline([('scaler', StandardScaler()), ('filter', SelectFpr(f_classif, alpha=options['pval']) ), ('clf', options['clf'])]) 
+    
+    cv_score_l1_ratio(**options) 
+    
     

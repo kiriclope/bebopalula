@@ -51,12 +51,12 @@ def get_fluo_data():
         # print('same neurons accross days') 
         if 'ACC' in gv.mouse:
             # print(gv.path + '/data/' + gv.mouse + '/SamedROI/' + gv.mouse + '_day_' + str(gv.day) + '.mat' )
-            data = loadmat(gv.path + '/data/' + gv.mouse + '/SamedROI/' + gv.mouse + '_day_' + str(gv.day) + '.mat' ) 
+            data = loadmat(gv.data_path + '/data/' + gv.mouse + '/SamedROI/' + gv.mouse + '_day_' + str(gv.day) + '.mat' ) 
         else:
-            data = loadmat(gv.path + '/data/' + gv.mouse + '/SamedROI_0%dDays/' % gv.n_days + gv.mouse + '_day_' + str(gv.day) + '.mat' )
+            data = loadmat(gv.data_path + '/data/' + gv.mouse + '/SamedROI_0%dDays/' % gv.n_days + gv.mouse + '_day_' + str(gv.day) + '.mat' )
                 
     else: 
-        data = loadmat(gv.path + '/data/' + gv.mouse + '/' + gv.mouse +'_day_' + str(gv.day) + '.mat') 
+        data = loadmat(gv.data_path + '/data/' + gv.mouse + '/' + gv.mouse +'_day_' + str(gv.day) + '.mat') 
             
     if 'raw' in gv.data_type:
         # print('raw') 
@@ -140,21 +140,22 @@ def which_trials(y_labels):
     
     print(gv.task)
     
+    bool_incorrect = ( y_labels[2]==2 ) | ( y_labels[2]==3 ) 
+    bool_correct = ( y_labels[2]==1 ) | ( y_labels[2]==4 ) 
+    
     if 'incorrect' in gv.task:
-        bool_incorrect = ( y_labels[2]==2 ) | ( y_labels[2]==3 ) 
         bool_trial = bool_trial & bool_incorrect 
     elif 'correct' in gv.task: 
-        bool_correct = ( y_labels[2]==1 ) | ( y_labels[2]==4 ) 
         bool_trial = bool_trial & bool_correct 
     
-    if 'pair' in gv.task: 
-        bool_trial = bool_trial & bool_pair 
-        # y_trials = np.argwhere( bool_trial & bool_pair ).flatten() 
-    elif 'unpair' in gv.task: 
+    if 'unpair' in gv.task: 
         bool_trial = bool_trial & bool_unpair 
-        # y_trials = np.argwhere( bool_trial & bool_unpair ).flatten() 
-        
-    if 'S1' in gv.task: 
+    elif 'pair' in gv.task: 
+        bool_trial = bool_trial & bool_pair 
+    
+    if 'S1_S2' in gv.task: 
+        y_trials = np.argwhere( bool_trial ).flatten() 
+    elif 'S1' in gv.task: 
         y_trials = np.argwhere( bool_trial & bool_S1 ).flatten() 
     elif 'S2' in gv.task: 
         y_trials = np.argwhere( bool_trial & bool_S2 ).flatten() 
@@ -228,7 +229,7 @@ def get_X_S1_S2(X_data, y_labels, stimulus='sample'):
         
         gv.task = task + "_%s2" % dum_str 
         y_S2 = which_trials(y_labels) 
-
+        
         gv.task = task + "_%s1_correct" % dum_str
         y_S1_correct = which_trials(y_labels) 
         
@@ -237,7 +238,7 @@ def get_X_S1_S2(X_data, y_labels, stimulus='sample'):
         
         gv.task = task + "_%s2_correct" % dum_str
         y_S2_correct = which_trials(y_labels) 
-
+        
         gv.task = task + "_%s2_incorrect" % dum_str
         y_S2_incorrect = which_trials(y_labels) 
         
@@ -261,13 +262,13 @@ def get_X_S1_S2(X_data, y_labels, stimulus='sample'):
         X_S1_S2[i_task, 0, 0:X_S1.shape[0]] = X_S1 
         X_S1_S2[i_task, 1, 0:X_S2.shape[0]] = X_S2 
         
-    print('X_S1', X_S1.shape, 'X_S2', X_S2.shape, 'X_S1_S2', X_S1_S2.shape) 
+    print('X_S1', X_S1.shape, 'X_S2', X_S2.shape, 'X_S1_S2', X_S1_S2.shape, 'y_trials', y_trials.shape) 
     gv.task = _task 
     
     return X_S1_S2, y_trials 
 
 def get_X_S1_X_S2_task(X_data, y_labels, stimulus='sample', task='all', trials = 'correct'): 
-        
+    
     if stimulus == 'sample': 
         dum_str = 'S'
     if stimulus=='test':
@@ -292,9 +293,9 @@ def get_bins():
 
     if(gv.T_WINDOW==0): 
         gv.bins_BL = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_BL[0]) and (gv.time[bin]<=gv.t_BL[1])] 
-    
+        
         gv.bins_STIM = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_STIM[0]) and (gv.time[bin]<=gv.t_STIM[1]) ] 
-    
+        
         gv.bins_ED = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_ED[0]) and (gv.time[bin]<=gv.t_ED[1]) ] 
                 
         gv.bins_DIST = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_DIST[0]) and (gv.time[bin]<=gv.t_DIST[1]) ]
@@ -324,9 +325,9 @@ def get_bins():
         
         gv.bins_CUE = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_CUE[1]-gv.T_WINDOW) and (gv.time[bin]<=gv.t_CUE[1]) ]
         
-        gv.bins_LD = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_LD[1]-gv.T_WINDOW) and (gv.time[bin]<=gv.t_LD[1] ) ] 
+        gv.bins_LD = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_LD[1]-gv.T_WINDOW) and (gv.time[bin]<=gv.t_LD[1]) ] 
 
-        gv.bins_RWD = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_RWD[1]-gv.T_WINDOW) and (gv.time[bin]<=gv.t_RWD[1] ) ] 
+        gv.bins_RWD = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_RWD[0]) and (gv.time[bin]<=gv.t_RWD[0]+gv.T_WINDOW ) ] 
         
         gv.bins_TEST = [ bin for bin in gv.bins if (gv.time[bin]>=gv.t_TEST[1]-gv.T_WINDOW) and (gv.time[bin]<=gv.t_TEST[1]) ] 
         

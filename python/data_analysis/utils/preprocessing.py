@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.signal import savgol_filter, butter, filtfilt 
+from scipy.signal import savgol_filter, butter, filtfilt, detrend
 import scipy.stats as stats 
 from sklearn.preprocessing import StandardScaler 
 from sklearn.feature_selection import SelectKBest, chi2, VarianceThreshold, f_regression, mutual_info_classif, f_classif
@@ -22,7 +22,9 @@ def preprocess_X_S1_X_S2(X_S1, X_S2, scaler='standard', center=None, scale=None,
         X_scale = X 
     
     # X_scale = savgol_filter(X_scale, int(np.ceil(gv.frame_rate/2.0) * 2 + 1), polyorder = gv.SAVGOL_ORDER, deriv=0, axis=-1, mode='mirror') 
-
+    
+    # X_scale = detrend(X_scale, bp=[gv.bins_STIM[0], gv.bins_DIST[0]]) 
+    
     if return_center_scale :
         return X_scale[:X_S1.shape[0]], X_scale[X_S1.shape[0]:], center, scale 
     else:
@@ -231,16 +233,16 @@ def bin_data(data, bin_step, bin_size):
     return bin_array
 
 def avg_epochs(X, epochs=None): 
-
+    
     X_avg = np.mean(X, axis=-1) 
-    X_epochs = np.empty( tuple([len(gv.epochs)])+ X_avg.shape ) 
-    # print('X', X_epochs.shape, 'X_avg', X_avg.shape) 
+    
+    if epochs is None: 
+        epochs = gv.epochs 
+    
+    X_epochs = np.empty( tuple([len(epochs)]) + X_avg.shape ) 
+    print('X', X_epochs.shape, 'X_avg', X_avg.shape) 
     # print('start', gv.bin_start, 'epochs', gv.epochs) 
-
-    if epochs==None:
-        epochs = gv.epochs
-        
-    # print('average over epochs', epochs) 
+    print('average over epochs', epochs) 
     
     for i_epoch, epoch in enumerate(epochs):
         

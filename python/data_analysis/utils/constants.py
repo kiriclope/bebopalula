@@ -13,7 +13,9 @@ global num_cores
 num_cores = int(0.9*multiprocessing.cpu_count()) 
 
 global path, scriptdir, figdir, filedir 
-path = '/homecentral/alexandre.mahrach/IDIBAPS/python/data_analysis' 
+# path = '/homecentral/alexandre.mahrach/IDIBAPS/python/data_analysis' 
+data_path = '/home/leon/' 
+path = '/home/leon/homecentral/IDIBAPS/python/data_analysis' 
 figdir = path + '/figs' 
 filedir = path + '/data' 
 
@@ -23,7 +25,7 @@ mice = ['C57_2_DualTask','ChRM04','JawsM15','JawsM18','ACCM03','ACCM04', 'mPFC',
 
 global day, days, n_days
 day=1
-n_days = 6
+n_days = 9
 
 days = np.arange(1, n_days+1) 
 
@@ -116,7 +118,7 @@ T_WINDOW = 0
 
 global SAVGOL, SAVGOL_ORDER
 SAVGOL=0
-SAVGOL_ORDER=1
+SAVGOL_ORDER=3
 
 global Z_SCORE, Z_SCORE_BL, DECONVOLVE, DCV_THRESHOLD, bins_z_score, NORMALIZE, Z_SCORE_TRIALS
 Z_SCORE_BL=0 

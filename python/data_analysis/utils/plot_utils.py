@@ -3,7 +3,8 @@ import os, sys
 import numpy as np
 import pickle
 import matplotlib
-matplotlib.use('GTK3cairo')
+# matplotlib.use('GTK3cairo')
+matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -66,46 +67,46 @@ def figDir():
     if gv.SYNTHETIC :
         gv.figdir = gv.figdir + '/synthetic' 
     
-    if gv.F0_THRESHOLD is not None: 
-        gv.figdir = gv.figdir + '/F0_thresh_%.2f' % gv.F0_THRESHOLD 
-        if gv.AVG_F0_TRIALS:
-            gv.figdir = gv.figdir + '_avg_trials'
+    # if gv.F0_THRESHOLD is not None: 
+    #     gv.figdir = gv.figdir + '/F0_thresh_%.2f' % gv.F0_THRESHOLD 
+    #     if gv.AVG_F0_TRIALS:
+    #         gv.figdir = gv.figdir + '_avg_trials'
             
-    elif gv.DECONVOLVE:
-        gv.figdir = gv.figdir + '/deconvolve_th_%.2f' % gv.DCV_THRESHOLD
+    # elif gv.DECONVOLVE:
+    #     gv.figdir = gv.figdir + '/deconvolve_th_%.2f' % gv.DCV_THRESHOLD
         
-    elif gv.data_type=='dF':
-        gv.figdir = gv.figdir + '/dF'
+    # elif gv.data_type=='dF':
+    #     gv.figdir = gv.figdir + '/dF'
         
-    else:
-        gv.figdir = gv.figdir + '/rawF' 
+    # else:
+    gv.figdir = gv.figdir + '/rawF' 
                 
-    if gv.CONCAT_BINS: 
-        gv.figdir = gv.figdir + '/concat_bins' 
+    # if gv.CONCAT_BINS: 
+    #     gv.figdir = gv.figdir + '/concat_bins' 
                 
     if gv.T_WINDOW!=0 :
         gv.figdir = gv.figdir + '/t_window_%.1f' % gv.T_WINDOW        
         
-    if gv.SAVGOL :
-        gv.figdir = gv.figdir + '/savgol' 
+    # if gv.SAVGOL :
+    #     gv.figdir = gv.figdir + '/savgol' 
 
-    if gv.DETREND: 
-        gv.figdir = gv.figdir + '/detrend'          
+    # if gv.DETREND: 
+    #     gv.figdir = gv.figdir + '/detrend'          
         
-    if gv.Z_SCORE :        
-        gv.figdir = gv.figdir + '/z_score'
+    # if gv.Z_SCORE :        
+    #     gv.figdir = gv.figdir + '/z_score'
         
-    elif gv.Z_SCORE_BL :        
-        gv.figdir = gv.figdir + '/z_score_bl'
+    # elif gv.Z_SCORE_BL :        
+    #     gv.figdir = gv.figdir + '/z_score_bl'
 
-    elif gv.Z_SCORE_TRIALS :
-        gv.figdir = gv.figdir + '/z_score_trials'
+    # elif gv.Z_SCORE_TRIALS :
+    #     gv.figdir = gv.figdir + '/z_score_trials'
         
-    elif gv.NORMALIZE : 
-        gv.figdir = gv.figdir + '/norm'     
-
-    if gv.standardize is not None: 
-        gv.figdir = gv.figdir + '/%s_scaler' % gv.standardize 
+    # elif gv.NORMALIZE : 
+    #     gv.figdir = gv.figdir + '/norm'     
+    
+    # if gv.standardize is not None: 
+    #     gv.figdir = gv.figdir + '/%s_scaler' % gv.standardize 
         
     if not os.path.isdir(gv.figdir):
         os.makedirs(gv.figdir)
@@ -157,15 +158,20 @@ def add_orientation_legend(ax):
               frameon=False, loc='center left', bbox_to_anchor=(1, 0.5))
     plt.tight_layout(rect=[0,0,0.9,1])    
 
-def save_fig(figname):
-    plt.figure(figname)
+def save_fig(figname, pkl=0):
+    fig = plt.figure(figname)
     if not os.path.isdir(gv.figdir):
         os.makedirs(gv.figdir)
     
     # if gv.IF_SAVE:
-    plt.savefig(gv.figdir + '/' + figname +'.svg',format='svg', dpi=300) 
-    print('save fig to', gv.figdir)
-    print('figname', figname)
+    path = gv.figdir + '/' + figname 
+    plt.savefig( path +'.svg',format='svg', dpi=300)
+
+    if pkl:
+        pickle.dump(fig, open(path + ".pickle", "wb") ) 
+    
+    print('save fig to', gv.figdir) 
+    print('figname', figname) 
         
 def save_dat(array, filename):
     if not os.path.isdir(gv.filedir):
@@ -183,35 +189,19 @@ def open_dat(filename):
         print('opening', gv.filedir + '/' + filename + '.pkl' )
         return pickle.load(f) 
 
-def add_vlines():
-    # plt.axvline(gv.t_STIM[0], c='k', ls='--') # sample onset
-    # plt.axvline(gv.t_STIM[1], c='k', ls='--') # sample onset
-    
-    plt.axvspan(gv.t_STIM[0], gv.t_STIM[1], alpha=shade_alpha, color='b') 
-    plt.axvspan(gv.t_DIST[0], gv.t_DIST[1], alpha=shade_alpha, color='b') 
-    plt.axvspan(gv.t_MD[1], gv.t_LD[0], alpha=shade_alpha, color='g') 
-    plt.axvspan(gv.t_TEST[0], gv.t_TEST[1], alpha=shade_alpha, color='b') 
-    
-    # plt.axvspan(gv.t_ED[0], gv.t_ED[1], alpha=shade_alpha, color='#ff00ff')
-    # plt.axvspan(gv.t_MD[0], gv.t_MD[1], alpha=shade_alpha, color='#ffff00')
-    # plt.axvspan(gv.t_LD[0], gv.t_LD[1], alpha=shade_alpha, color='#00ffff') 
-    
-    # plt.axvline(gv.t_MD[1], c='k', ls='--') 
-    # plt.axvline(gv.t_LD[0], c='k', ls='--') 
-    
-    # plt.axvline(gv.t_DIST[0], color='k', ls='--')
-    # plt.axvline(gv.t_DIST[1], color='k', ls='--')
-    
-    # plt.axvline(gv.t_MD[0], c='g', ls='--') #DRT delay
-    # plt.axvline(gv.t_MD[1], c='g', ls='--') 
-        
-    # plt.axvline(gv.t_LD[0], c='b', ls='--')
-    # plt.axvline(gv.t_LD[1], c='b', ls='--') # DPA late delay
+def add_vlines(ax=None):
 
-    # plt.axvline(gv.t_test[0], color='k', ls='--')
-    # plt.axvline(gv.t_test[1], color='k', ls='--')
-    
-    
+    if ax is None:
+        plt.axvspan(gv.t_STIM[0], gv.t_STIM[1], alpha=shade_alpha, color='b') 
+        plt.axvspan(gv.t_DIST[0], gv.t_DIST[1], alpha=shade_alpha, color='b') 
+        plt.axvspan(gv.t_MD[1], gv.t_LD[0], alpha=shade_alpha, color='g') 
+        plt.axvspan(gv.t_TEST[0], gv.t_TEST[1], alpha=shade_alpha, color='b')     
+    else:
+        ax.axvspan(gv.t_STIM[0], gv.t_STIM[1], alpha=shade_alpha, color='b') 
+        ax.axvspan(gv.t_DIST[0], gv.t_DIST[1], alpha=shade_alpha, color='b') 
+        ax.axvspan(gv.t_MD[1], gv.t_LD[0], alpha=shade_alpha, color='g') 
+        ax.axvspan(gv.t_TEST[0], gv.t_TEST[1], alpha=shade_alpha, color='b') 
+        
 def add_hlines():
     plt.axhline(gv.t_STIM[0], c='k', ls='-') # sample onset
 

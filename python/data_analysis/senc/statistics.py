@@ -1,6 +1,6 @@
 import gc 
 import numpy as np
-import scikits.bootstrap as boot
+# import scikits.bootstrap as boot
 import scipy.stats as stats
 import random 
 from numpy.random import randint
@@ -9,7 +9,7 @@ from sklearn.utils import resample
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2, f_classif, mutual_info_classif
 
-from mlxtend.evaluate import permutation_test
+# from mlxtend.evaluate import permutation_test
 
 from joblib import Parallel, delayed, parallel_backend 
 import utils.progressbar as pgb 
@@ -95,7 +95,7 @@ def perm_parloop(X_S1_DPA, X_S2_DPA, X_S1_other, X_S2_other, i_iter, statfunctio
     # shuffle S1
     X_shuffle_S1 = np.vstack((X_S1_DPA, X_S1_other)) 
     np.random.shuffle(X_shuffle_S1) 
-
+    
     X_shuffle_S1_DPA = X_shuffle_S1[:X_S1_DPA.shape[0]] 
     X_shuffle_S1_other = X_shuffle_S1[X_S1_DPA.shape[0]:] 
     
@@ -181,18 +181,20 @@ def my_bootstraped_ci(X_S1, X_S2, confidence=0.95, n_samples=1000, statfunction=
     dum = np.vstack( ( np.zeros(lperc.shape), lperc) ).T 
     
     # lval = np.max(dum, axis=1)
-    lval = mean - np.max(dum, axis=1) 
+    lval = mean - lperc 
+    # lval = mean - np.max(dum, axis=1) 
     
     p = (confidence + (1.0 - confidence) / 2.0 ) * 100 
     uperc = np.percentile(ostats, p , axis=0) 
     dum = np.vstack( ( np.ones(uperc.shape), uperc) ).T 
     
     # uval = np.min( dum, axis=1) 
-    uval = -mean + np.min(dum, axis=1) 
+    uval = -mean + uperc
+    # uval = -mean + np.min(dum, axis=1)  
     
-    print('mean', mean, 'lower', lperc, 'upper', uperc, 'm-l', lval, 'm+l', uval) 
+    # print('mean', mean, 'lower', lperc, 'upper', uperc, 'm-l', lval, 'm+l', uval) 
     
-    ci = np.vstack((lval, uval)) 
+    ci = np.vstack((lval, uval)).T 
     # print(ci.shape) 
     
-    return ci 
+    return mean, ci 

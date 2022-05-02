@@ -11,9 +11,9 @@ def get_X_y_day(day=1, stimulus='sample'):
     '''
     
     # print('day', day) 
-    gv.day = day 
+    gv.day = day     
+    X_all, y_all = data.get_fluo_data()
     
-    X_all, y_all = data.get_fluo_data() 
     X_trials, y_trials = data.get_X_S1_S2(X_all, y_all, stimulus) 
     # print('X_trials', X_trials.shape, 'y_trials', y_trials.shape) 
     
@@ -23,12 +23,20 @@ def get_X_S1_X_S2_day_task(day=1, stimulus='sample', task='all', trials='correct
     ''' get X (fluo) and y (labels) for a given day 
     inputs: - day (int)
     outputs: - X_trials, y_trials 
-    '''    
+    ''' 
     gv.day = day 
     
     X_all, y_all = data.get_fluo_data() 
     X_S1, X_S2 = data.get_X_S1_X_S2_task(X_all, y_all, stimulus, task, trials=trials)    
-    print('X_S1', X_S1.shape, 'X_S2', X_S2.shape) 
+    print('X_S1', X_S1.shape, 'X_S2', X_S2.shape)
+    
+    # X_S1, X_S2 = pp.preprocess_X_S1_X_S2(X_S1, X_S2,
+    #                                      scaler='robust',
+    #                                      center=None, scale=None,
+    #                                      avg_mean=0,
+    #                                      avg_noise=1,
+    #                                      unit_var=1) 
+    
     # X_S1 = pp.preprocess_X(X_S1) 
     # X_S2 = pp.preprocess_X(X_S2)
     
@@ -44,10 +52,12 @@ def get_X_y_days(day='all', stimulus='sample'):
     inputs: - day 
     outputs: - X_days, y_days 
     '''
+
+    dum = int(len(gv.days)/2)
     if day=='first': 
-        day_list = gv.days[:3] 
+        day_list = gv.days[:dum] 
     elif day=='last': 
-        day_list = gv.days[3:] 
+        day_list = gv.days[dum:] 
     elif day=='all': 
         day_list = gv.days 
     elif isinstance(day, int): 

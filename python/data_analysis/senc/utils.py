@@ -136,7 +136,9 @@ def get_coding_direction(X_S1, X_S2, **kwargs):
     # using lasso 
     elif kwargs['feature_sel']=='lasso': 
         Delta = - get_coefs(X_S1.copy(), X_S2.copy(), **kwargs).T 
+        # Delta = - get_boots_coefs(X_S1, X_S2, **kwargs).T 
         # print('Delta', Delta.shape) 
+    
     return Delta 
 
 def unit_vector(vector): 
@@ -172,7 +174,7 @@ def get_cos_sel(X_S1, X_S2, return_Delta=0, **kwargs):
             try :
                 Delta_bins = np.nanmean( Delta0[:, bins], axis=-1)
             except:
-                Delta_bins = Delta0[:, 0] 
+                Delta_bins = Delta0[:] 
         else:
             Delta_bins = np.nanmean( Delta[:, bins], axis=-1) 
         
@@ -186,16 +188,21 @@ def get_cos_sel(X_S1, X_S2, return_Delta=0, **kwargs):
         cosine = np.zeros( Delta.shape[-1] ) 
         for i_epoch in range(Delta.shape[-1]): 
             cosine[i_epoch] = cos_between(Delta0[:,0], Delta[:, i_epoch]) 
-    else: 
+    else:
         cosine = np.zeros( Delta.shape[-1] ) 
         for i_epoch in range(Delta.shape[-1]): 
             if i_epoch==0 : 
-                dum = np.arange(3) 
+                dum = np.arange(cosine.shape[0]) 
                 dum = dum[dum!=j_epoch] 
                 cosine[i_epoch] = cos_between(Delta[:, dum[0]], Delta[:, dum[1]]) 
             else: 
                 cosine[i_epoch] = cos_between(Delta[:, j_epoch], Delta[:, i_epoch]) 
-    
+            
+        dum = cosine[0].copy() 
+        cosine[0] = cosine[1].copy()
+        cosine[1] = cosine[2].copy()
+        cosine[2] = dum 
+        
     if return_Delta : 
         return cosine, Delta 
     else: 
@@ -299,108 +306,139 @@ def get_norm_sel(X_S1, X_S2, **kwargs):
     
     return norm_ 
 
-def get_proj(X_S1, X_S2, return_Delta=0, **kwargs): 
+# def get_proj(X_S1, X_S2, return_Delta=0, **kwargs): 
+    # 
+    # bins=kwargs['bins'] 
+    # Delta0=kwargs['Delta0'] 
     
-    bins=kwargs['bins'] 
-    Delta0=kwargs['Delta0'] 
-    
-    # if kwargs['Delta0'] is not None:
-    _, p_val = stats.ttest_ind(X_S1, X_S2, equal_var = False, nan_policy='propagate', axis=0) 
+    # # if kwargs['Delta0'] is not None:
+    # _, p_val = stats.ttest_ind(X_S1, X_S2, equal_var = False, nan_policy='propagate', axis=0) 
 
-    # X_S1_sel = X_S1
-    # X_S2_sel = X_S2
+    # # X_S1_sel = X_S1
+    # # X_S2_sel = X_S2
     
-    X_S1_sel = X_S1.copy() 
-    X_S2_sel = X_S2.copy() 
+    # X_S1_sel = X_S1.copy() 
+    # X_S2_sel = X_S2.copy() 
     
-    X_S1_sel[:, p_val>=kwargs['pval']] = 0 
-    X_S2_sel[:, p_val>=kwargs['pval']] = 0 
+    # X_S1_sel[:, p_val>=kwargs['pval']] = 0 
+    # X_S2_sel[:, p_val>=kwargs['pval']] = 0 
     
-    non_zero = sum(p_val<kwargs['pval']) 
+    # non_zero = sum(p_val<kwargs['pval']) 
     
-    X_S1_avg = np.median(X_S1_sel, axis=0) 
-    X_S2_avg = np.median(X_S2_sel, axis=0) 
+    # X_S1_avg = np.median(X_S1_sel, axis=0) 
+    # X_S2_avg = np.median(X_S2_sel, axis=0) 
     
-    Delta = X_S1_avg - X_S2_avg 
-    # Delta = Delta / np.linalg.norm(Delta, axis=0) 
+    # Delta = X_S1_avg - X_S2_avg 
+    # # Delta = Delta / np.linalg.norm(Delta, axis=0) 
+    # # else:
+    # #     Delta = Delta0
+        
+    # if bins is not None: 
+    #     if Delta0 is not None: 
+    #         # Delta0_norm = Delta0 / np.linalg.norm(Delta0, axis=0) 
+    #         try :
+    #             Delta_bins = np.nanmean( Delta0[:, bins], axis=-1)
+    #         except:
+    #             Delta_bins = Delta0[:, 0] 
+    #     else: 
+    #         Delta_bins = np.nanmean( Delta[:, bins], axis=-1) 
+        
+    #     Delta_bins /= np.linalg.norm(Delta_bins) 
+        
+    #     X_proj = np.zeros( Delta.shape[-1] ) 
+        
+    #     # for i_epoch in range(Delta.shape[-1]): 
+    #     #     X_proj[i_epoch] = ( np.dot(Delta_bins, X_S1_avg[:, i_epoch]) - np.dot(Delta_bins, X_S2_avg[:, i_epoch]) ) / 2.0 
+        
+    #     if kwargs['sample'] == 'S1_S2':
+    #         X_S1_avg = np.mean( X_S1, axis=0 ) 
+    #         X_S2_avg = np.mean( X_S2, axis=0 ) 
+            
+    #         # X_S1_avg /= np.linalg.norm(X_S1_avg, axis=0) 
+    #         # X_S2_avg /= np.linalg.norm(X_S2_avg, axis=0) 
+            
+    #         X_proj= ( np.dot(Delta_bins,  X_S1_avg ) +  np.dot(Delta_bins,  X_S2_avg ) ) / 2.0 
+            
+    #         # for i_epoch in range(Delta.shape[-1]): 
+    #         #     X_proj[i_epoch] = ( np.mean( np.dot(Delta_bins, X_S1[..., i_epoch].T), axis=0 ) 
+    #         #                         - np.mean( np.dot(Delta_bins, X_S2[..., i_epoch].T), axis=0 ) ) / 2.0 
+    #     elif kwargs['sample'] == 'S1':
+    #         # print('S1')
+    #         # X_S1_avg = np.mean( X_S1, axis=0 ) 
+    #         # # X_S1_avg /= np.linalg.norm(X_S1_avg, axis=0) 
+    #         # X_proj= np.dot(Delta_bins,  X_S1_avg ) 
+    #         for i_epoch in range(Delta.shape[-1]): 
+    #             X_proj[i_epoch] = np.mean( np.dot(Delta_bins, X_S1[..., i_epoch].T), axis=0 )  
+            
+    #     elif kwargs['sample'] == 'S2': 
+    #         # print('S2')
+    #         # X_S2_avg = np.mean( X_S2, axis=0 ) 
+    #         # # X_S2_avg /= np.linalg.norm(X_S2_avg, axis=0) 
+    #         # X_proj = np.dot(Delta_bins,  X_S2_avg ) 
+    #         for i_epoch in range(Delta.shape[-1]): 
+    #             X_proj[i_epoch] = np.mean( np.dot(Delta_bins, X_S2[..., i_epoch].T), axis=0 ) 
+    
+    # elif Delta0 is not None:
+    #     # X_proj = np.zeros( Delta.shape[-1] ) 
+    #     # for i_epoch in range(Delta.shape[-1]): 
+    #     #     X_proj[i_epoch] = (np.dot(Delta0[:,i_epoch], X_S1_avg[:, i_epoch])
+    #     #                        - np.dot(Delta0[:,i_epoch], X_S2_avg[:, i_epoch]) ) / 2.0 
+        
+    #     X_proj = np.zeros( Delta.shape[-1] ) 
+    #     for i_epoch in range(Delta.shape[-1]): 
+    #         X_proj[i_epoch] = ( np.mean( np.dot(Delta0[:,i_epoch], X_S1[..., i_epoch].T), axis=0 ) 
+    #                             - np.mean( np.dot(Delta0[:,i_epoch], X_S2[..., i_epoch].T), axis=0 ) ) / 2.0  
+    # else: 
+    #     # X_proj = np.zeros( Delta.shape[-1] ) 
+    #     # for i_epoch in range(Delta.shape[-1]): 
+    #     #     X_proj[i_epoch] = (np.dot(Delta[:,i_epoch], X_S1_avg[:, i_epoch])
+    #     #                        - np.dot(Delta[:,i_epoch], X_S2_avg[:, i_epoch]) ) / 2.0 
+        
+    #     X_proj = np.zeros( Delta.shape[-1] ) 
+    #     for i_epoch in range(Delta.shape[-1]): 
+    #         X_proj[i_epoch] = ( np.mean( np.dot(Delta[:,i_epoch], X_S1[..., i_epoch].T), axis=0 ) 
+    #                             - np.mean( np.dot(Delta[:,i_epoch], X_S2[..., i_epoch].T), axis=0 ) ) / 2.0 
+    
+    # if return_Delta : 
+    #     return X_proj , Delta 
     # else:
-    #     Delta = Delta0
+    #     return X_proj 
+
         
-    if bins is not None: 
-        if Delta0 is not None: 
-            # Delta0_norm = Delta0 / np.linalg.norm(Delta0, axis=0) 
-            try :
-                Delta_bins = np.nanmean( Delta0[:, bins], axis=-1)
-            except:
-                Delta_bins = Delta0[:, 0] 
-        else: 
-            Delta_bins = np.nanmean( Delta[:, bins], axis=-1) 
-        
-        Delta_bins /= np.linalg.norm(Delta_bins) 
-        
-        X_proj = np.zeros( Delta.shape[-1] ) 
-        
-        # for i_epoch in range(Delta.shape[-1]): 
-        #     X_proj[i_epoch] = ( np.dot(Delta_bins, X_S1_avg[:, i_epoch]) - np.dot(Delta_bins, X_S2_avg[:, i_epoch]) ) / 2.0 
-        
-        if kwargs['sample'] == 'S1_S2':
-            X_S1_avg = np.mean( X_S1, axis=0 ) 
-            X_S2_avg = np.mean( X_S2, axis=0 ) 
-            
-            # X_S1_avg /= np.linalg.norm(X_S1_avg, axis=0) 
-            # X_S2_avg /= np.linalg.norm(X_S2_avg, axis=0) 
-            
-            X_proj= ( np.dot(Delta_bins,  X_S1_avg ) +  np.dot(Delta_bins,  X_S2_avg ) ) / 2.0 
-            
-            # for i_epoch in range(Delta.shape[-1]): 
-            #     X_proj[i_epoch] = ( np.mean( np.dot(Delta_bins, X_S1[..., i_epoch].T), axis=0 ) 
-            #                         - np.mean( np.dot(Delta_bins, X_S2[..., i_epoch].T), axis=0 ) ) / 2.0 
-        elif kwargs['sample'] == 'S1':
-            # print('S1')
-            # X_S1_avg = np.mean( X_S1, axis=0 ) 
-            # # X_S1_avg /= np.linalg.norm(X_S1_avg, axis=0) 
-            # X_proj= np.dot(Delta_bins,  X_S1_avg ) 
-            for i_epoch in range(Delta.shape[-1]): 
-                X_proj[i_epoch] = np.mean( np.dot(Delta_bins, X_S1[..., i_epoch].T), axis=0 )  
-            
-        elif kwargs['sample'] == 'S2': 
-            # print('S2')
-            # X_S2_avg = np.mean( X_S2, axis=0 ) 
-            # # X_S2_avg /= np.linalg.norm(X_S2_avg, axis=0) 
-            # X_proj = np.dot(Delta_bins,  X_S2_avg ) 
-            for i_epoch in range(Delta.shape[-1]): 
-                X_proj[i_epoch] = np.mean( np.dot(Delta_bins, X_S2[..., i_epoch].T), axis=0 ) 
+def get_proj(X_S1, X_S2, return_Delta=0, **kwargs):
     
-    elif Delta0 is not None:
-        # X_proj = np.zeros( Delta.shape[-1] ) 
-        # for i_epoch in range(Delta.shape[-1]): 
-        #     X_proj[i_epoch] = (np.dot(Delta0[:,i_epoch], X_S1_avg[:, i_epoch])
-        #                        - np.dot(Delta0[:,i_epoch], X_S2_avg[:, i_epoch]) ) / 2.0 
-        
-        X_proj = np.zeros( Delta.shape[-1] ) 
-        for i_epoch in range(Delta.shape[-1]): 
-            X_proj[i_epoch] = ( np.mean( np.dot(Delta0[:,i_epoch], X_S1[..., i_epoch].T), axis=0 ) 
-                                - np.mean( np.dot(Delta0[:,i_epoch], X_S2[..., i_epoch].T), axis=0 ) ) / 2.0  
-    else: 
-        # X_proj = np.zeros( Delta.shape[-1] ) 
-        # for i_epoch in range(Delta.shape[-1]): 
-        #     X_proj[i_epoch] = (np.dot(Delta[:,i_epoch], X_S1_avg[:, i_epoch])
-        #                        - np.dot(Delta[:,i_epoch], X_S2_avg[:, i_epoch]) ) / 2.0 
-        
-        X_proj = np.zeros( Delta.shape[-1] ) 
-        for i_epoch in range(Delta.shape[-1]): 
-            X_proj[i_epoch] = ( np.mean( np.dot(Delta[:,i_epoch], X_S1[..., i_epoch].T), axis=0 ) 
-                                - np.mean( np.dot(Delta[:,i_epoch], X_S2[..., i_epoch].T), axis=0 ) ) / 2.0 
+    coefs = kwargs['Delta0']
     
-    if return_Delta : 
-        return X_proj , Delta 
+    if coefs is None :
+        # X_S1_avg = X_S1[..., [24,25,26]]
+        # X_S2_avg = X_S2[..., [24,25,26]]
+        # coefs = -get_coefs(X_S1_avg, X_S2_avg, **kwargs)
+        # coefs = np.mean(coefs, axis=0)
+        if X_S1.shape[-1]==84:
+            X_S1_avg = pp.avg_epochs(X_S1, ['ED']) 
+            X_S2_avg = pp.avg_epochs(X_S2, ['ED']) 
+            coefs = -get_coefs(X_S1_avg, X_S2_avg, **kwargs)[0]
+        else:
+            X_S1_avg = X_S1[...,0] 
+            X_S2_avg = X_S2[...,0] 
+            coefs = -get_coefs(X_S1_avg[..., np.newaxis], X_S2_avg[..., np.newaxis], **kwargs)[0] 
+            # coefs = -get_coefs(X_S1, X_S2, **kwargs)[0]
+                
+    X_proj = np.zeros( X_S1.shape[-1] ) 
+    
+    for i_epoch in range(X_S1.shape[-1]): 
+        X_proj[i_epoch] = np.mean( np.dot(coefs, X_S1[..., i_epoch].T), axis=0 ) 
+        X_proj[i_epoch] -= np.mean( np.dot(coefs, X_S2[..., i_epoch].T), axis=0 ) 
+    
+    if return_Delta :
+        return X_proj / 2.0, coefs
     else:
-        return X_proj 
+        return X_proj / 2.0
     
 def get_sel(X_S1, X_S2, return_Delta=0, **kwargs):
     
-    if kwargs['obj']!='score' and kwargs['obj']!='coefs' : 
-        X_S1, X_S2 = scale_data(X_S1, X_S2, scaler=kwargs['scaler'], center=kwargs['center'], scale=kwargs['scale']) 
+    # if kwargs['obj']!='score' and kwargs['obj']!='coefs' and kwargs['obj']!='cos' : 
+    #     X_S1, X_S2 = scale_data(X_S1, X_S2, scaler=kwargs['scaler'], center=kwargs['center'], scale=kwargs['scale']) 
     
     if kwargs['obj']=='cos':
         if return_Delta :
@@ -417,13 +455,17 @@ def get_sel(X_S1, X_S2, return_Delta=0, **kwargs):
         if return_Delta:
             out, Delta = get_proj(X_S1, X_S2, return_Delta=1, **kwargs) 
         else: 
-            out = get_proj(X_S1, X_S2, return_Delta=0, **kwargs)
+            out = get_proj(X_S1, X_S2, return_Delta=0, **kwargs) 
     
     elif kwargs['obj']=='score':
         out = get_cv_score(X_S1, X_S2, **kwargs) 
     
     elif kwargs['obj']=='coefs': 
-        out = get_coefs(X_S1, X_S2, **kwargs) 
+        out = get_boots_coefs(X_S1, X_S2, **kwargs) 
+        
+    elif kwargs['obj']=='non_zero':
+        coefs = get_coefs(X_S1, X_S2, **kwargs) 
+        out = np.nanmean(coefs!=0, axis=-1) 
     
     if return_Delta : 
         return out, Delta 
