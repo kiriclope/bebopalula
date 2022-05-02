@@ -5,15 +5,13 @@ temp_globals=$(echo $temp_files | awk 'NR==1{print $1}')
 temp_main=$(echo $temp_files | awk 'NR==1{print $2}')
 temp_out=$(echo $temp_files | awk 'NR==1{print $3}')
 
-IF_LIF=0 
-IF_BIN=1 
+IF_LIF=1 
+IF_BIN=0
 
 IF_STP=0
 
 IF_GEN_CON=1 
 IF_SPEC=0
-
-IF_STIM=0 
 
 sed -ie "s/ DURATION .*/ DURATION (double) 20E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 2E3 /" "$temp_globals" ; 
@@ -31,7 +29,6 @@ sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ;
 sed -ie "s/ IF_SPEC .*/ IF_SPEC ${IF_SPEC} /" "$temp_globals" ; 
 
 sed -ie "s/ IF_STP .*/ IF_STP ${IF_STP} /" "$temp_globals" ; 
-sed -ie "s/ IF_STIM .*/ IF_STIM ${IF_STIM} /" "$temp_globals" ; 
 
 sed -ie "s/ IF_TRIALS .*/ IF_TRIALS 0 /" "$temp_globals" ; 
 sed -ie "s/ IF_INI_COND .*/ IF_INI_COND 0 /" "$temp_globals" ; 
@@ -46,7 +43,7 @@ for K in $(seq ${K_min} ${dK} ${K_max}); do
     
     ./mem_usage.sh 
     ./cpu_usage.sh
-	
+    
     echo "n_pop ${n_pop} N $N K $K kappa $kappa" 
     echo "#########################################################################"
     

@@ -26,29 +26,33 @@ int main(int argc , char** argv) {
   
   get_args(argc , argv) ;
   
-  IF_STRUCTURE = IF_RING || IF_SPEC || IF_LOW_RANK || IF_GAUSS ; 
-  int IF_SIM= IF_BIN || IF_LIF || IF_RATE ;
+  IF_STRUCTURE = IF_RING || IF_SPEC || IF_LOW_RANK || IF_GAUSS ;
+  int IF_SIM= IF_BIN || IF_LIF || IF_RATE ;  
+  IF_STIM = IF_DPA || IF_DUAL || IF_DRT || IF_STEP || IF_CHRISTOS ; 
   
-  IF_STIM = IF_DPA || IF_DUAL || IF_DRT ;
-    
   get_param() ; 
   init_globals() ; 
-
+  
   if(IF_GEN_KSI)
     gen_ksi() ;
   
-  if(IF_GEN_CON) 
-    gen_con_sparse_vec() ; 
-  else 
-    get_con_sparse_vec() ; 
+  if(IF_SINGLE_NEURON==0)
+    if(IF_GEN_CON) 
+      gen_con_sparse_vec() ; 
+    else 
+      get_con_sparse_vec() ; 
   
   if(IF_SIM) {
     
     create_dir() ; 
     mean_field_rates() ; 
     
-    if(IF_LIF) 
-      run_sim_lif() ; 
+    if(IF_LIF)
+      if(IF_SINGLE_NEURON)
+	run_single_neuron() ;
+      else
+	run_sim_lif() ;
+    
     if(IF_BIN) 
       run_sim_bin() ; 
   }

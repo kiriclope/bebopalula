@@ -11,15 +11,9 @@ IF_STP=1
 
 IF_GEN_CON=0 
 IF_SPEC=0 
-IF_LOW_RANK=1
+IF_LOW_RANK=0
 RANK=1
 FIX_KSI_SEED=1
-
-sed -ie "s/ M0 (double) .*/ M0 (double) 0.075 /" "$temp_globals" ; 
-
-if (($IF_LIF==1)); then 
-    sed -ie "s/ M0 (double) .*/ M0 (double) 0.0025 /" "$temp_globals" ; 
-fi
 
 sed -ie "s/ IF_LIF .*/ IF_LIF ${IF_LIF} /" "$temp_globals" ; 
 sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ; 
@@ -44,22 +38,27 @@ sed -ie "s/ IF_SPEC .*/ IF_SPEC ${IF_SPEC} /" "$temp_globals" ;
 sed -ie "s/ IF_LOW_RANK .*/ IF_LOW_RANK ${IF_LOW_RANK} /" "$temp_globals" ; 
 sed -ie "s/ RANK .*/ RANK ${RANK} /" "$temp_globals" ;
 
+sed -ie "s/ IF_STEP .*/ IF_STEP 0 /" "$temp_globals" ; 
+sed -ie "s/ IF_DPA .*/ IF_DPA 0 /" "$temp_globals" ;
+sed -ie "s/ IF_DUAL .*/ IF_DUAL 0 /" "$temp_globals" ;
+
 read n_pop N K dir kappa <<<  "$1 $2 $3 $4 $5" 
 read tau_f_min dtau_f tau_f_max <<< "$6 $7 $8" 
 
-sed -ie "s/ KAPPA (double) .*/ KAPPA (double) ${kappa} /" "$temp_globals" ;
-sed -ie "s/ KAPPA_1 (double) .*/ KAPPA_1 (double) ${kappa} /" "$temp_globals" ; 
+# sed -ie "s/ KAPPA (double) .*/ KAPPA (double) ${kappa} /" "$temp_globals" ;
+# sed -ie "s/ KAPPA_1 (double) .*/ KAPPA_1 (double) ${kappa} /" "$temp_globals" ; 
 
 sed -ie "s/ FIX_KSI_SEED .*/ FIX_KSI_SEED ${FIX_KSI_SEED} /" "$temp_globals" ; 
 sed -ie "s/ SEED_KSI (double) .*/ SEED_KSI (double) 2.0 /" "$temp_globals" 
 
-for ini in $(seq 0 1 20); do 
+for ini in $(seq 0 1 10); do 
 	
     sed -ie "s/INI_COND_ID .*/INI_COND_ID ${ini} /" "$temp_globals" 
     
     for tau_f in $(seq ${tau_f_min} ${dtau_f} ${tau_f_max}); do 
 	
 	sed -ie "s/ TAU_FAC (double) .*/ TAU_FAC (double) ${tau_f} /" "$temp_globals" ; 
+	# sed -ie "s/ USE (double) .*/ USE (double) ${tau_f} /" "$temp_globals" ; 
 	
 	echo "#########################################################################" 
 	./mem_usage.sh

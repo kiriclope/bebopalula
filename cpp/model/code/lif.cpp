@@ -353,7 +353,7 @@ int main(int argc , char** argv) {
     for(i=0; i<n_neurons; i++) { // presynaptic pop 
       pre_pop = which_pop[i] ; 
       vold = volt[i] ; 
-
+      
       if(IF_STP && ( stp_synapse[pre_pop] || stp_synapse[pre_pop + n_pop] ) ) { 
 	
 	if(time-TIME_STEADY > 0.30*TIME_REC && time-TIME_STEADY <= 0.40*TIME_REC) { 

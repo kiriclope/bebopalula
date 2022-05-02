@@ -14,12 +14,11 @@ void print_sim_info() {
   if(IF_RATE)
     cout << "Rate model " ; 
       
-  if(IF_EULER) 
+  if(IF_RK2) 
+    cout << "with RK2 scheme and interpolation " ; 
+  else
     cout << "with EULER integration " ; 
-  else 
-    if(IF_RK2) 
-      cout << "with RK2 scheme and interpolation " ; 
-  
+      
   if(IF_STP) 
     cout << "and STP " ; 
   
@@ -40,7 +39,7 @@ void print_sim_info() {
   cout << "mean field rates: " ; 
   if(IF_LIF) { 
     for(i=0; i<n_pop; i++) 
-      cout << mf_rates[i]*1000. << " " ; 
+      cout << mf_rates[i] << " " ; 
     cout << endl ;
   }
   else {
@@ -74,17 +73,29 @@ void close_files() {
 void init_globals() { 
   m0 = M0 ; 
 
-  if(n_pop==1)
-    n_neurons = (unsigned long) (n_neurons * 10000) ; 
+  if(n_pop==1) {
+    if(IF_SINGLE_NEURON)
+      n_neurons = (unsigned long) n_neurons ; 
+    else 
+      n_neurons = (unsigned long) (n_neurons * 10000) ; 
+  }
   else 
     n_neurons = (unsigned long) (n_neurons * 10000) ; 
     
   sqrt_K = sqrt( (double) K) ; 
   
-  sqrt_Ka = new double [n_pop]() ; 
+  Ka = new double [n_pop]() ; 
+  sqrt_Ka = new double [n_pop]() ;
+  
   for(i=0;i<n_pop;i++) 
-    sqrt_Ka[i] = sqrt_K ; 
-  /* sqrt_Ka[i] = sqrt( K * n_frac[i] ) ;  */
+    if(IF_MATO_K) {
+      Ka[i] = K * n_frac[i] ;
+      sqrt_Ka[i] = sqrt( Ka[i] ) ;      
+    }
+    else {
+      Ka[i] = K ; 
+      sqrt_Ka[i] = sqrt_K ; 
+    }
   
   n_per_pop = new unsigned long [n_pop]() ; 
   
@@ -110,12 +121,20 @@ void init_globals() {
   
   mean_rates = new double [n_pop]() ; // population averaged rate also averaged over TIME_WINDOW  
   filter_rates = new double [n_neurons]() ; // temporal averaged over TIME_WINDOW
+
+  ISI = new double [n_neurons]() ; // temporal averaged over TIME_WINDOW 
   
   // h^(ab)_i=h^b_i, inputs from presynaptic population b to postsynaptic neuron (i,a)
   // here i goes threw all the populations 
   inputs = new double *[n_pop]() ; 
   for(i=0;i<n_pop;i++) // presynaptic population b 
     inputs[i] = new double [n_neurons]() ; 
+
+  if(IF_NMDA) {
+    inputs_nmda = new double *[n_pop]() ; 
+    for(i=0;i<n_pop;i++) // presynaptic population b 
+      inputs_nmda[i] = new double [n_neurons]() ; 
+  }
   
   filter_inputs = new double *[n_pop]() ; 
   for(i=0;i<n_pop;i++) // presynaptic population b 
@@ -134,12 +153,16 @@ void init_globals() {
   if(IF_LOW_RANK) {
     overlaps = new double [n_pop]() ; 
     ksi = new double [n_neurons]() ;
-    ksi_scaled = new double [n_per_pop[0] * n_per_pop[0]]() ; 
+    ksi_scaled = new double [n_neurons * n_neurons]() ; 
+    
+    gauss = new double [n_neurons]() ; 
+    for(j=0; j<n_neurons; j++)
+      gauss[j] = white_noise(covar_ksi_gen) ; 
     
     ksi_init = new double [n_neurons]() ; 
     if(RANK==2) { 
       ksi_1 = new double [n_neurons]() ; 
-      ksi_1_scaled = new double [n_per_pop[0] * n_per_pop[0]]() ; 
+      ksi_1_scaled = new double [n_neurons * n_neurons]() ; 
     }
   }
   
@@ -156,14 +179,19 @@ void init_globals() {
   
   ext_inputs_scaled = new double [n_pop]() ; 
   J_scaled = new double [n_pop*n_pop]() ; // instantaneous individual membrane voltage 
+  J_nmda = new double [n_pop*n_pop]() ; // instantaneous individual membrane voltage 
   
 }
 
 void delete_globals() { 
   delete [] mean_rates ; 
   delete [] filter_rates ; 
+  delete [] ISI ;
   
-  delete [] inputs ; 
+  delete [] inputs ;
+  if(IF_NMDA)
+    delete [] inputs_nmda ;
+  
   delete [] filter_inputs ; 
   delete [] net_inputs ; 
   delete [] net_inputs_RK2 ; 
@@ -171,11 +199,15 @@ void delete_globals() {
   delete [] ext_inputs ; 
   delete [] ff_inputs ; 
   delete [] J ; 
+  delete [] J_scaled ;
+  delete [] J_nmda ;
   
   delete [] n_per_pop ;
   delete [] cum_n_per_pop ;
-  free(which_pop) ; 
+  free(which_pop) ;
+  
   delete [] sqrt_Ka ;
+  delete [] Ka ;
   
   if(IF_LOW_RANK) {
     delete [] ksi ; 
@@ -319,7 +351,7 @@ double threshold_linear(double x) {
 }
 
 double cut_LR(double x) {
-  if(eps[2-n_pop]*x>0.0) 
+  if(eps[2-n_pop]*x>0.0 && x<=1.0) 
     return x ; 
   else 
     return 0. ; 
@@ -363,7 +395,7 @@ void create_dir() {
   str_kappa << fixed << setprecision(2) << KAPPA ; 
   str_kappa_var << fixed << setprecision(2) << KAPPA_VAR ; 
   str_kappa_1 << fixed << setprecision(2) << KAPPA_1 ; 
-
+  
   ostringstream str_ksi, str_ksi_var, str_ksi_1 , str_ksi_var_1 ; 
   str_ksi << fixed << setprecision(2) << MEAN_KSI ; 
   str_ksi_var << fixed << setprecision(2) << VAR_KSI ; 
@@ -372,7 +404,13 @@ void create_dir() {
  
   ostringstream str_map_seed ; 
   str_map_seed << fixed << setprecision(0) << MAP_SEED ; 
-  
+
+  ostringstream str_EE, str_EI, str_IE, str_II ;  
+  str_EE << fixed << setprecision(0) << SIGMA[0] ; 
+  str_EI << fixed << setprecision(0) << SIGMA[1] ; 
+  str_IE << fixed << setprecision(0) << SIGMA[2] ; 
+  str_II << fixed << setprecision(0) << SIGMA[3] ; 
+    
   if(IF_STRUCTURE) { 
     if(IF_SPEC) {
       if(RANK==1)
@@ -386,18 +424,21 @@ void create_dir() {
     
     if(IF_LOW_RANK) {
       if(RANK==1){
-	path += "/low_rank/kappa_" + str_kappa.str() ;
-	/* path += "/mean_" + str_ksi.str() + "_var_" + str_ksi_var.str() ; */
+	path += "/low_rank/kappa_" + str_kappa.str() ; 
+	/* path += "/mean_" + str_ksi.str() + "_var_" + str_ksi_var.str() ; */ 
       }
-      if(RANK==2) {
+      if(RANK==2) { 
 	path += "/low_rank/kappa_" + str_kappa.str() + "_kappa_1_" + str_kappa_1.str() ; 
 	/* path += "/mean_" + str_ksi.str() + "_var_" + str_ksi_var.str() ;  */
 	/* path += "/mean_" + str_ksi_1.str() + "_var_" + str_ksi_var_1.str() ;  */
       }
     }
-    
+  
     if(IF_RING)
-      path += "/ring/kappa_" + str_kappa.str() ; 
+      path += "/ring/kappa_" + str_kappa.str() ;
+        
+    if(IF_GAUSS)
+      path += "/gauss/EE_" + str_EE.str() + "_EI_" + str_EI.str() +"_IE_" + str_IE.str() + "_II_" + str_II.str() ;     
   } 
   
   ostringstream str_kappa_ext, str_phi_ext ; 
@@ -427,6 +468,11 @@ void create_dir() {
   str_m0 << fixed << setprecision(4) << M0 ; 
   if(IF_LOOP_M0) 
     path += "/m0_" + str_m0.str() ; 
+
+  ostringstream str_gain ; 
+  str_gain << fixed << setprecision(1) << GAIN ; 
+  if(IF_LOOP_GAIN) 
+    path += "/gain_" + str_gain.str() ; 
   
   if(IF_INI_COND) 
     path += "/ini_cond_" + to_string( (int) INI_COND_ID ) ; 
@@ -434,7 +480,7 @@ void create_dir() {
   if(IF_TRIALS) 
     path += "/trial_" + to_string( (int) TRIAL_ID ) ; 
   
-  make_dir(path) ;
+  make_dir(path) ; 
   
   cout << "Created directory : " ; 
   cout << path << endl ; 
@@ -556,8 +602,8 @@ void get_m1_phase() {
     yCord = 0 ; 
     
     for(unsigned long j=cum_n_per_pop[i_pop]; j < cum_n_per_pop[i_pop+1]; j++) {
-      xCord += filter_rates[j] * cos(2.0 * j * dPhi) ; 
-      yCord += filter_rates[j] * sin(2.0 * j * dPhi) ; 
+      xCord += filter_rates[j] * cos(2.0 * j * dPhi) / TIME_WINDOW ; 
+      yCord += filter_rates[j] * sin(2.0 * j * dPhi) / TIME_WINDOW ; 
     }
     
     m1[i_pop] = ( 2.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
@@ -566,7 +612,7 @@ void get_m1_phase() {
     if(phase[i] < 0)
       phase[i] = phase[i] + M_PI ;
     
-    phase[i] *= 180.0/M_PI ;
+    phase[i] *= 180.0/M_PI ; 
   }
 }
 

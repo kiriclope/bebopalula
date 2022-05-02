@@ -80,22 +80,22 @@ void angle_ksi() {
   cout << "cos_ksi_0: " << cos_ksi_0 ; 
   cout << " angle_ksi_0: " << acos(cos_ksi_0) * 180.0 / M_PI << "°" << endl ; 
   
-  double norm_ksi=0, norm_ksi_1=0, dot=0 ; 
-  norm_ksi = norm_array(ksi, n_per_pop[0]) ; 
-  norm_ksi_1 = norm_array(ksi, n_per_pop[0]) ; 
+  /* double norm_ksi=0, norm_ksi_1=0, dot=0 ;  */
+  /* norm_ksi = norm_array(ksi, n_per_pop[0]) ;  */
+  /* norm_ksi_1 = norm_array(ksi, n_per_pop[0]) ;  */
   
-  for(i=0; i<n_per_pop[0]; i++) 
-    dot += ksi[i]*ksi_1[i] ; 
+  /* for(i=0; i<n_per_pop[0]; i++)  */
+  /*   dot += ksi[i]*ksi_1[i] ;  */
   
-  for(i=0; i<n_per_pop[0]; i++) 
-    ksi_1[i] = ksi_1[i] - dot/norm_ksi/norm_ksi * ksi[i] ; // Gram Schmidt ortho 
-    /* ksi_1[i] = ksi_1[i] - dot/norm_ksi_1/norm_ksi_1 * ksi_1[i] ; // Gram Schmidt ortho  */ 
+  /* for(i=0; i<n_per_pop[0]; i++)  */
+  /*   ksi_1[i] = ksi_1[i] - dot/norm_ksi/norm_ksi * ksi[i] ; // Gram Schmidt ortho  */
+  /*   /\* ksi_1[i] = ksi_1[i] - dot/norm_ksi_1/norm_ksi_1 * ksi_1[i] ; // Gram Schmidt ortho  *\/  */
   
-  double cos_ksi = 0.0 ; 
-  cos_ksi = cos_array(ksi, ksi_1, n_per_pop[0] ) ; 
+  /* double cos_ksi = 0.0 ;  */
+  /* cos_ksi = cos_array(ksi, ksi_1, n_per_pop[0] ) ;  */
   
-  cout << "cos_ksi: " << cos_ksi ; 
-  cout << " angle_ksi: " << acos(cos_ksi) * 180.0 / M_PI << "°" << endl ;
+  /* cout << "cos_ksi: " << cos_ksi ;  */
+  /* cout << " angle_ksi: " << acos(cos_ksi) * 180.0 / M_PI << "°" << endl ; */
   
   /* double *ksi_rotate; */
   /* ksi_rotate = new double [n_per_pop[0]]() ;  */
@@ -125,7 +125,7 @@ void angle_maps() {
   
   for(i=0; i<n_per_pop[0]; i++) 
     sum_theta += theta[i] ; 
-
+  
   cout << "sum theta: " << sum_theta << endl ;
   double sum_theta_1=0.0, norm_theta_1 ;
   
@@ -155,7 +155,11 @@ void angle_maps() {
   cout << "cos_maps: " << cos_maps << ", angle_maps: " << acos(cos_maps) * 180.0 / M_PI << "°" << endl ;
 }
 
-double Gaussian1D(double mu, double sigma) { 
+double Gaussian1D(double mu, double sigma) {
+
+  mu = min(abs(mu), 2.0*M_PI-abs(mu)) ;  // mato et al.
+  sigma *= DEG_TO_RAD ; 
+  
   if(sigma!=0.) 
     return exp(-mu*mu/2./sigma/sigma)/sqrt(2.*M_PI)/sigma ; 
   else 
@@ -229,7 +233,7 @@ void init_con_globals() {
       if(j>=cum_n_per_pop[i] && j<cum_n_per_pop[i+1]) 
 	which_pop[j] = i ; 
   
-  prefactor = new double [n_pop*n_neurons]() ; 
+  prefactor = new double [n_pop*n_neurons]() ;
   
 }
 
@@ -276,7 +280,7 @@ void init_theta() {
     for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++) 
       theta[j] = ( 2.0 * M_PI * (double) (j-cum_n_per_pop[i]) ) / (double) n_per_pop[i] ; 
   } 
-
+  
   cout << "theta: " ; 
   for(i=0; i<10; i++) 
     cout << theta[i] << " " ; 
@@ -357,11 +361,12 @@ void init_ksi() {
   
   double norm ;
   
-  if(FIX_KSI_SEED)
-    for(i=0; i<n_pop; i++) {
-      norm = 0 ;
+  if(FIX_KSI_SEED) 
+    for(i=0; i<n_pop; i++) { 
+      norm = 0 ; 
       for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++) { 
-	ksi[j] = MEAN_KSI + sqrt(VAR_KSI) * white_noise(ksi_gen) ; 
+	ksi[j] = MEAN_KSI + sqrt(VAR_KSI-COVAR_KSI) * white_noise(ksi_gen) 
+	  + sqrt(COVAR_KSI) * gauss[j] ; 
 	norm += ksi[j]*ksi[j] ; 
       } 
       
@@ -397,7 +402,8 @@ void init_ksi_1() {
     for(i=0; i<n_pop; i++) {
       norm = 0 ;
       for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++) { 
-	ksi_1[j] = MEAN_KSI_1 + sqrt(VAR_KSI_1) * white_noise(ksi_1_gen) ; 
+	ksi_1[j] = MEAN_KSI_1 + sqrt(VAR_KSI_1-COVAR_KSI) * white_noise(ksi_1_gen)
+	  + sqrt(COVAR_KSI) * gauss[j] ; 
 	norm += ksi_1[j]*ksi_1[j] ; 
       } 
       
@@ -419,7 +425,7 @@ void init_ksi_1() {
     } 
 
   angle_ksi() ;
-
+  
   cout << "ksi_1: " ;
   for(i=0; i<10; i++)
     cout << ksi_1[i] << " " ;
@@ -439,16 +445,25 @@ void func_con_prob() {
   K_over_Na = new double [n_pop]() ; 
   
   for(i=0; i<n_pop; i++) { 
-    K_over_Na[i] = ( K / (double) n_per_pop[i] ) ; 
-    /* K_over_Na[i] = (double) ( K * n_frac[i] / (double) n_per_pop[i] ) ;  */ 
+    /* K_over_Na[i] = ( K / (double) n_per_pop[i] ) ;  */ 
+    if(IF_MATO_K) 
+      K_over_Na[i] = (double) ( K * n_frac[i] / (double) n_per_pop[i] ) ;
+    else
+      K_over_Na[i] = (double) ( K / (double) n_per_pop[i] ) ; 
     cout << K_over_Na[i] << " " ; 
   } 
   cout << endl ; 
   
   if(IF_STRUCTURE) { 
-
-    kappa = KAPPA / sqrt_K ; 
+    if(IF_MATO_K)
+      kappa = KAPPA / sqrt(K * n_frac[0]) ; 
+    else 
+      kappa = KAPPA / sqrt_K ;
+    
     if(RANK==2) 
+      if(IF_MATO_K)
+	kappa_1 = KAPPA / sqrt(K * n_frac[0]) ; 
+    else
       kappa_1 = KAPPA / sqrt_K ; 
     
     if(IF_SPEC) { 
@@ -467,13 +482,13 @@ void func_con_prob() {
       /* double phases[6] = {0, M_PI/4.0, M_PI/2.0, 3.0*M_PI/4.0, M_PI, 3.0*M_PI/2.0} ;  */
       
       for(j=0; j<n_neurons; j++) { 
-	pre_pop = which_pop[j] ;
+	pre_pop = which_pop[j] ; 
 	
-	if(IF_KAPPA_DIST) {
-	  /* kappa = ( KAPPA * unif(rand_gen) ) / sqrt_K ;  */
-	  kappa = ( KAPPA + sqrt(KAPPA_VAR) * white_noise(rand_gen) ) / sqrt_K ;
+	if(IF_KAPPA_DIST) { 
+	  /* kappa = ( KAPPA * unif(rand_gen) ) / sqrt_K ;  */ 
+	  kappa = ( KAPPA + sqrt(KAPPA_VAR) * white_noise(rand_gen) ) / sqrt_K ; 
 	  kappa = log_normal(rand_gen) / sqrt_K ; 
-	}
+	} 
 	
 	kappa_K_N = K_over_Na[pre_pop] * kappa ; 
 	
@@ -489,11 +504,11 @@ void func_con_prob() {
 	  if(IS_STRUCT_SYN[pre_pop + post_pop * n_pop]) { 
 	    cos_D_theta = cos(theta[i]-theta[j]) ; 
 	    /* cos_D_theta = cos(theta[i]-theta[j] + phases[i_phase] ) ;  */ 
-	    con_prob[j + i * n_neurons] -= kappa_K_N * cos_D_theta ; 
+	    con_prob[j + i * n_neurons] += kappa_K_N * cos_D_theta ; 
 	    if(RANK==2) 
-	      con_prob[idx_perm[j] + idx_perm[i] * n_neurons] -= kappa_1_K_N * cos_D_theta ; 
+	      con_prob[idx_perm[j] + idx_perm[i] * n_neurons] += kappa_1_K_N * cos_D_theta ; 
 	    
-	    if(con_prob[j + i * n_neurons]<=0 || con_prob[j + i * n_neurons]>=1)
+	    if(con_prob[j + i * n_neurons]<=0 || con_prob[j + i * n_neurons]>=1) 
 	      cout << "error con_prob>1 or <0"  << endl ; 
 	  } 
 	} 
@@ -507,7 +522,7 @@ void func_con_prob() {
       if(RANK==1)
 	cout << "kappa, " << KAPPA << endl ;
       
-      /* init_ksi() ; */       
+      /* init_ksi() ; */  
       /* /\* kappa = KAPPA / sqrt_K  ; *\/ */
       
       if(RANK==2) {
@@ -517,7 +532,7 @@ void func_con_prob() {
       }
       
       for(j=0; j<n_neurons; j++) {
-	pre_pop = which_pop[j] ;
+	pre_pop = which_pop[j] ; 
 	
 	kappa_K_N = K_over_Na[pre_pop] * kappa ; 
 	if(RANK==2) 
@@ -526,18 +541,25 @@ void func_con_prob() {
 	for(i=0; i<n_neurons; i++) { 
 	  post_pop = which_pop[i] ; 
 	  con_prob[j + i * n_neurons] += K_over_Na[pre_pop] ; 
-	  /* if(IS_STRUCT_SYN[pre_pop + post_pop * n_pop]) {  */
-	  /*   con_prob[j + i * n_neurons] -= kappa_K_N * ksi[i] * ksi[j] ;  */ 
-	  /*   if(RANK==2)  */
-	  /*     con_prob[j + i * n_neurons] -= kappa_1_K_N * ksi_1[i] * ksi_1[j] ;  */
-	  /* }  */
+	  if(IS_STRUCT_SYN[pre_pop + post_pop * n_pop]) { 
+	    con_prob[j + i * n_neurons] += kappa_K_N * ksi[i] * ksi[j] ; 
+	    if(RANK==2) 
+	      con_prob[j + i * n_neurons] += kappa_1_K_N * ksi_1[i] * ksi_1[j] ; 
+	    con_prob[j + i * n_neurons]	= cut_LR(con_prob[j + i * n_neurons]) ;	    
+	  }
+	  
+	  /* if(con_prob[j + i * n_neurons]<=0 || con_prob[j + i * n_neurons]>=1)  */
+	  /*   cout << "error con_prob>1 or <0"  << endl ;  */
 	} 
       } 
     } // end low rank 
     
     if(IF_RING) { 
       cout << "ring: " ; 
-      cout << "kappa, " << KAPPA << endl ; 
+      cout << "kappa, " << KAPPA << endl ;
+      
+      if(KAPPA>0.5) 
+	cout << "ERROR: KAPPA TOO LARGE" << endl ; 
       
       init_theta() ;
       if(RANK==2) {
@@ -551,37 +573,41 @@ void func_con_prob() {
 	for(i=0; i<n_neurons; i++) { 
 	  post_pop = which_pop[i] ;
 	  
-	  con_prob[j + i * n_neurons] += K_over_Na[pre_pop] ;
-	  
-	  if(IS_STRUCT_SYN[pre_pop + post_pop * n_pop]) 
-	    con_prob[j + i * n_neurons] += 2.0 * K_over_Na[pre_pop] * KAPPA * cos( theta[i] - theta[j] ) ; 
+	  con_prob[j + i * n_neurons] += K_over_Na[pre_pop] ; 
+	  /* if(IS_STRUCT_SYN[pre_pop + post_pop * n_pop])  */ 
+	  con_prob[j + i * n_neurons] += 2.0 * K_over_Na[pre_pop] * kappas[pre_pop] * cos( theta[i] - theta[j] ) ; 
 	  
 	}
       }
     } // end ring
-    
-    if(IF_GAUSS) {
-      cout << "gaussian structure: " ; 
-      cout << " L, " << L <<" sigma, " << SIGMA << endl ; 
 
-      init_X() ; 
+    if(IF_GAUSS) { 
+      cout << "gaussian structure: " ; 
+      cout << " L, " << L <<", sigma, " ; 
+      cout << SIGMA[0] <<" "<< SIGMA[1] ; 
+      cout <<" "<< SIGMA[2] <<" "<< SIGMA[3] <<  endl ; 
       
-      for(i=0; i<n_neurons; i++) { 
-	pre_pop = which_pop[i] ; 
-	for(j=0; j<n_neurons; j++) { 
-	  post_pop = which_pop[j] ; 
-	  con_prob[i + j * n_neurons] = Gaussian1D(X[i]-X[j], SIGMA) ; 
-	  prefactor[j + pre_pop * n_neurons ] += con_prob[i + j * n_neurons] ; // sum over presynaptic neurons i 
-	} 
-      } 
+      /* init_X() ;  */
+      init_theta() ;
       
-      for(i=0; i<n_neurons; i++) { 
-      	pre_pop = which_pop[i] ; 
-      	for(j=0; j<n_neurons; j++) { 
-      	  post_pop = which_pop[j] ; 
-      	  con_prob[i + j * n_neurons] *= K / prefactor[j + pre_pop * n_neurons ] ; // Pji = Zb Cji with Zb = K / sum_i Pji then sum_i Pji = K 
-      	} 
-      }
+      for(i=0; i<n_neurons; i++) { // need loop over post before pre to compute prefactor
+	post_pop = which_pop[i] ; 
+	
+	for(j=0; j<n_neurons; j++) { // Jij: j (pre) to i (post)
+	  pre_pop = which_pop[j] ;
+	  
+	  con_prob[j + i * n_neurons] = Gaussian1D(theta[i]-theta[j], SIGMA[pre_pop+post_pop*n_pop]) ; 
+	  // Pij = Zb Cij with Zb = K / sum_j Cij then sum_j Pij = K 
+	  prefactor[i + pre_pop*n_neurons] += con_prob[j + i * n_neurons] ; // sum over presynaptic neurons j 
+	}
+	
+	for(j=0; j<n_neurons; j++) {
+	  pre_pop = which_pop[j] ; 
+	  con_prob[j + i * n_neurons] *= Ka[pre_pop] / prefactor[i+pre_pop*n_neurons] ; 
+	}
+	/* prefactor[pre_pop+post_pop*n_pop] = 0.0 ; // reinit prefactor for each post  */
+	
+      } // end loop post
       
     }// endif Gauss
     
@@ -602,7 +628,7 @@ void func_con_prob() {
 }
 
 void func_con_vec() {
-
+  
   cout << "generate connectivity vector" << endl ; 
   
   con_vec = new int [n_neurons*n_neurons]() ; 
@@ -636,16 +662,14 @@ void func_con_sparse_rep() {
   
   n_post = new int [n_neurons]() ;
     
-  /* avg_n_post = new int [n_pop*n_pop]() ; */
-
+  avg_n_post = new int [n_pop*n_pop]() ;
+  
   /* n_pre = new int *[n_pop]() ; */
   /* for(i=0;i<n_pop;i++) // presynaptic population b */
   /*   n_pre[i] = new int [n_neurons]() ; */
   
   /* avg_n_pre = new int [n_pop*n_pop]() ;  */
-
-    /* counter=0 ;  */
-    
+  
   for(j=0; j<n_neurons; j++) { // Jij -> j (cols, pre) to i (rows, post) 
     pre_pop = which_pop[j] ; 
     
@@ -655,8 +679,8 @@ void func_con_sparse_rep() {
       if(con_vec[j + i * n_neurons]) { // j->i = 1 with proba Kj/Nj 
 	id_post[counter] = i ; 
 	n_post[j]++ ; // Kb to post pop a, K/N * N = K 
-	/* n_pre[pre_pop][i]++ ; // Ka from pre pop a, K/N * Nj = Kj */
-	/* avg_n_post[pre_pop + post_pop*n_pop]++ ;  */
+	/* n_pre[pre_pop][i]++ ; // Ka from pre pop a, K/N * Nj = Kj */ 
+	avg_n_post[pre_pop + post_pop*n_pop]++ ; 
 	counter++ ; 
       } 
     } 
@@ -664,17 +688,17 @@ void func_con_sparse_rep() {
   
   delete [] con_vec ; 
   
-  /* cout << "average number of postsynaptic connections per pop: " ;  */
-  /* for(i=0; i<n_pop; i++)  */
-  /*   for(j=0; j<n_pop; j++)  */
-  /*     cout << i << j << " " << avg_n_post[j+i*n_pop] / n_per_pop[i] << " " ;  */
-  /* cout << endl ;  */
+  cout << "average number of postsynaptic connections per pop: " ;
+  for(i=0; i<n_pop; i++)
+    for(j=0; j<n_pop; j++)
+      cout << i << j << " " << avg_n_post[j+i*n_pop] / n_per_pop[i] << " " ;
+  cout << endl ;
   
   /* for(i=0; i<2*n_pop; i++) */
   /*   cout << avg_n_post[i] / n_per_pop[i%2] << " " ; */
   /* cout << endl ; */
   
-  /* delete [] avg_n_post ; */
+  delete [] avg_n_post ;
   
   /* cout << "number of presynaptic connections per neuron: " << endl ; */
 
@@ -700,14 +724,14 @@ void func_con_sparse_rep() {
   /*   }  */
   /* }  */
    
-  /* cout << "total number of postsynaptic connections per neuron: " << endl ;  */
+  cout << "total number of postsynaptic connections per neuron: " << endl ;
   
-  /* for(j=0; j<n_pop; j++) { //pre  */
-  /*   cout << j << " " ;  */
-  /*   for(k=n_per_pop[j]; k>n_per_pop[j]-10; k--)  */
-  /*     cout << n_post[k] << " " ;  */
-  /*   cout << endl ;  */
-  /* }  */
+  for(j=0; j<n_pop; j++) { //pre
+    cout << j << " " ;
+    for(k=n_per_pop[j]; k>n_per_pop[j]-10; k--)
+      cout << n_post[k] << " " ; 
+    cout << endl ;
+  }
   
   idx_post[0] = 0 ; 
   for(i=1; i<n_neurons; i++) 
@@ -730,11 +754,11 @@ void check_sparse_rep() {
   delete [] con_vec ;
 }
 
-void create_con_dir() {   
+void create_con_dir() { 
   
   con_path = "/homecentral/alexandre.mahrach/IDIBAPS/connectivity/" ; 
   con_path += to_string(n_pop)+"pop"; 
-    
+  
   if(n_pop==1)
     con_path += "/N" + to_string(n_per_pop[0]/1000) ; 
   else 
@@ -746,20 +770,29 @@ void create_con_dir() {
   str_kappa << fixed << setprecision(2) << KAPPA ; 
   str_kappa_var << fixed << setprecision(2) << KAPPA_VAR ; 
   str_kappa_1 << fixed << setprecision(2) << KAPPA_1 ; 
-
+  
   ostringstream str_ksi, str_ksi_var, str_ksi_1 , str_ksi_var_1 ; 
   str_ksi << fixed << setprecision(2) << MEAN_KSI ; 
   str_ksi_var << fixed << setprecision(2) << VAR_KSI ; 
   str_ksi_1 << fixed << setprecision(2) << MEAN_KSI ; 
   str_ksi_var_1 << fixed << setprecision(2) << VAR_KSI ; 
-
+  
   ostringstream str_seed_ksi ; 
   str_seed_ksi << fixed << setprecision(0) << SEED_KSI ; 
 
   ostringstream str_map_seed ; 
   str_map_seed << fixed << setprecision(0) << MAP_SEED ; 
+
+  ostringstream str_EE, str_EI, str_IE, str_II ;  
+  str_EE << fixed << setprecision(0) << SIGMA[0] ; 
+  str_EI << fixed << setprecision(0) << SIGMA[1] ; 
+  str_IE << fixed << setprecision(0) << SIGMA[2] ; 
+  str_II << fixed << setprecision(0) << SIGMA[3] ; 
   
-  if(IF_STRUCTURE) { 
+  if(IF_STRUCTURE) {
+    if(IF_RING)
+      con_path += "/ring/kappa_" + str_kappa.str() ; 
+    
     if(IF_SPEC) { 
       if(RANK==1) 
 	con_path += "/spec/kappa_" + str_kappa.str() ; 
@@ -768,7 +801,11 @@ void create_con_dir() {
 	if(FIX_MAP_SEED) 
 	  con_path += "/seed_" + str_map_seed.str() ; 
       }
+        
     }
+
+    if(IF_GAUSS)
+      con_path += "/gauss/EE_" + str_EE.str() + "_EI_" + str_EI.str() +"_IE_" + str_IE.str() + "_II_" + str_II.str() ; 
     
     ksi_path = con_path ;
     
@@ -797,7 +834,7 @@ void create_con_dir() {
   
   /* if(IF_TRIALS)  */
   /*   con_path += "/trial_" + to_string( (int) TRIAL_ID ) ;  */
-
+  
   make_dir(con_path) ; 
   
   cout << "created directory: " ; 

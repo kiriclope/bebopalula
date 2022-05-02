@@ -9,14 +9,14 @@ IF_LIF=1
 IF_BIN=0 
 
 IF_STP=1 
-IF_GEN_CON=1 
+IF_GEN_CON=0 
 
 RANK=1 
 IF_SPEC=0 
 FIX_MAP_SEED=1 
 
-IF_LOW_RANK=1 
-FIX_KSI_SEED=1  
+IF_LOW_RANK=0 
+FIX_KSI_SEED=1 
 
 sed -ie "s/ DURATION .*/ DURATION (double) 10E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_INI .*/ TIME_INI (double) 2E3 /" "$temp_globals" ; 
@@ -50,8 +50,8 @@ sed -ie "s/ IF_STEP .*/ IF_STEP 0 /" "$temp_globals" ;
 sed -ie "s/ IF_DPA .*/ IF_DPA 0 /" "$temp_globals" ; 
 sed -ie "s/ IF_DUAL .*/ IF_DUAL 0 /" "$temp_globals" ; 
 
-read n_pop N K dir <<<  "$1 $2 $3 $4" 
-read kappa_min dkappa kappa_max <<< "$5 $6 $7" 
+read n_pop N K dir kappa<<<  "$1 $2 $3 $4 $5" 
+read gain_min dgain gain_max <<< "$6 $7 $8" 
 
 # ( cd ../../../cuda/connectivity/ ;
 #   sed -ie "s/ n_pop .*/ n_pop ${n_pop} /" globals.h ; 
@@ -64,24 +64,26 @@ read kappa_min dkappa kappa_max <<< "$5 $6 $7"
 
 sed -ie "s/ SEED_KSI (double) .*/ SEED_KSI (double) 2.0 /" "$temp_globals" 
 
-echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas" 
-g++ gen_ksi.cpp -Ofast -o ksi.out -s -std=c++11 -lgsl -lblas 
-./ksi.out $n_pop $N $K $dir 
+# echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas" 
+# g++ gen_ksi.cpp -Ofast -o ksi.out -s -std=c++11 -lgsl -lblas 
+# ./ksi.out $n_pop $N $K $dir 
+
+sed -ie "s/ KAPPA (double) .*/ KAPPA (double) ${kappa} /" "$temp_globals" ; 
+sed -ie "s/ KAPPA_1 (double) .*/ KAPPA_1 (double) ${kappa} /" "$temp_globals" ; 
 
 for trial in $(seq 0 1 20); do 
     
     sed -ie "s/ MAP_SEED .*/ MAP_SEED ${trial} /" "$temp_globals" 
     sed -ie "s/ SEED_KSI (double) .*/ SEED_KSI (double) 2.0 /" "$temp_globals" 
     
-    for kappa in $(seq ${kappa_min} ${dkappa} ${kappa_max}); do 
+    for gain in $(seq ${gain_min} ${dgain} ${gain_max}); do 
+
+	sed -ie "s/ GAIN (double) .*/ GAIN (double) ${gain} /" "$temp_globals" ; 
 	
 	echo "#########################################################################" 
 	./mem_usage.sh 
 	./cpu_usage.sh 
 	echo "#########################################################################" 
-	
-	sed -ie "s/ KAPPA (double) .*/ KAPPA (double) ${kappa} /" "$temp_globals" ; 
-	sed -ie "s/ KAPPA_1 (double) .*/ KAPPA_1 (double) ${kappa} /" "$temp_globals" ; 
 	
 	# ( cd ../../../cuda/connectivity/ ; 
 	#   sed -ie "s/ KAPPA (double) .*/ KAPPA (double) ${kappa} /" globals.h ; 
@@ -89,7 +91,7 @@ for trial in $(seq 0 1 20); do
 	# ) 
 	
 	echo "simulation parameters:" 
-	echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} kappa ${kappa} trial ${trial}" 
+	echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} gain ${gain} trial ${trial}" 
 	echo "#########################################################################" 
 	
 	# ( cd ../../../cuda/connectivity/ ; 
@@ -101,7 +103,7 @@ for trial in $(seq 0 1 20); do
 	echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas" 
 	g++ ${temp_main} -Ofast -s -std=c++11 -o ${temp_out} -lgsl -lblas
 	# ./${temp_out} $n_pop $N $K $dir 	
-	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_kappa_${kappa}_trial_${trial} ./${temp_out} $n_pop $N $K $dir 
+	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_gain_${gain}_trial_${trial} ./${temp_out} $n_pop $N $K $dir 
 	
 	# sleep 5s 
     done

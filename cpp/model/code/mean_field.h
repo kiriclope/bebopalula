@@ -40,7 +40,8 @@ void mean_field_rates() {
     VectorXd b(n_pop) ;
     
     for(int i=0;i<n_pop;i++) {
-      b(i) = GAIN*ext_inputs[i]*m0 ; 
+      /* b(i) = GAIN*ext_inputs[i]*m0*1000.  - Vth / TAU_MEM[i] / sqrt_Ka[0] ;  */
+      b(i) = GAIN*ext_inputs[i]*m0*1000. ;
       for(int j=0;j<n_pop;j++) 
 	A(i,j) = GAIN*J[j+i*n_pop] ; 
     }

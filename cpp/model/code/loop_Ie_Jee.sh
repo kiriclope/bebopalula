@@ -11,10 +11,8 @@ IF_BIN=0
 IF_STP=1 
 
 IF_GEN_CON=0 
-IF_SPEC=1 
+IF_SPEC=0
 RANK=1 
-
-IF_STIM=0 
 
 sed -ie "s/ IF_LIF .*/ IF_LIF ${IF_LIF} /" "$temp_globals" ; 
 sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ; 
@@ -34,7 +32,6 @@ sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ;
 sed -ie "s/ IF_SPEC .*/ IF_SPEC ${IF_SPEC} /" "$temp_globals" ; 
 sed -ie "s/ RANK .*/ RANK ${RANK} /" "$temp_globals" ; 
 
-sed -ie "s/ IF_STIM .*/ IF_STIM ${IF_STIM} /" "$temp_globals" ; 
 sed -ie "s/ IF_HYSTERESIS .*/ IF_HYSTERESIS 0 /" "$temp_globals" ;
 
 sed -ie "s/ IF_TRIALS .*/ IF_TRIALS 0 /" "$temp_globals" ; 

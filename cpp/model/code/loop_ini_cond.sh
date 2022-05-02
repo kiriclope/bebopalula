@@ -8,7 +8,7 @@ temp_out=$(echo $temp_files | awk 'NR==1{print $3}')
 IF_LIF=1  
 IF_BIN=0
 
-IF_STP=0
+IF_STP=1
 
 if (($IF_STP==1)); then
     sed -ie "s/ M0 (double) .*/ M0 (double) 0.01 /" "$temp_globals" ; 
@@ -20,15 +20,15 @@ fi
 if (($IF_LIF==1)); then 
     
     if (($IF_STP==1)); then 
-	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0025 /" "$temp_globals" ; 
+	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0005 /" "$temp_globals" ; 
     fi 
     if (($IF_STP==0)); then 
-	sed -ie "s/ M0 (double) .*/ M0 (double) 0.01 /" "$temp_globals" ; 
+	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0005 /" "$temp_globals" ; 
     fi
 fi
 
 IF_GEN_CON=0
-IF_SPEC=1 
+IF_SPEC=0 
 IF_LOW_RANK=0 
 RANK=1
 FIX_MAP_SEED=1

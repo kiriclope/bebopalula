@@ -19,7 +19,7 @@ fi
 
 if (($IF_LIF==1)); then 
     if (($IF_STP==1)); then 
-	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0025 /" "$temp_globals" ; 
+	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0005 /" "$temp_globals" ; 
     fi
     if (($IF_STP==0)); then 
 	sed -ie "s/ M0 (double) .*/ M0 (double) 0.005 /" "$temp_globals" ; 
@@ -27,9 +27,9 @@ if (($IF_LIF==1)); then
 fi
 
 IF_GEN_CON=0 
-IF_SPEC=1
+IF_SPEC=0
 IF_LOW_RANK=0
-RANK=2
+RANK=1
 
 sed -ie "s/ IF_LIF .*/ IF_LIF ${IF_LIF} /" "$temp_globals" ; 
 sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ; 

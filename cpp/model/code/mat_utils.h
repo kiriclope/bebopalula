@@ -3,14 +3,14 @@
 
 void get_con_sparse_vec() { 
 
-  if(IF_SPEC || IF_RING) 
-    init_theta() ;    
+  if(IF_SPEC || IF_RING || IF_GAUSS) 
+    init_theta() ; 
   
   create_con_dir() ; 
   
-  cout << "###############################################" << endl ;   
-  cout << "getting connectivity sparse vectors from:" ;
-  cout << con_path << endl ;
+  cout << "###############################################" << endl ; 
+  cout << "getting connectivity sparse vectors from:" ; 
+  cout << con_path << endl ; 
   
   n_post = new int [n_neurons]() ; 
   read_from_file(con_path, "n_post", n_post, n_neurons) ; 
@@ -108,7 +108,7 @@ void gen_con_sparse_vec() {
   
   if(IF_CHECK_SPARSE_REP) 
     check_sparse_rep() ; 
-
+  
   if(IF_SPEC) 
     if(RANK==2) { 
       write_to_file(con_path, "idx_perm", idx_perm, n_neurons) ; 
