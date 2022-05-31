@@ -163,10 +163,10 @@ if __name__ == '__main__':
     kwargs['sample'] = 'S1' 
     
     kwargs['scaler'] = 'standard' 
-    kwargs['scaler_BL'] = 'robust' 
-    kwargs['avg_mean_BL'] = 0 
+    kwargs['scaler_BL'] = 'standard' 
+    kwargs['avg_mean_BL'] = 1
     kwargs['avg_noise_BL'] = 1 
-    kwargs['unit_var'] = 1 
+    kwargs['unit_var'] = 0 
     
     kwargs['tasks'] = np.array(['DPA', 'DualGo', 'DualNoGo']) 
     # kwargs['tasks'] = ['DPA', 'Dual'] 
@@ -180,7 +180,7 @@ if __name__ == '__main__':
         # kwargs['stimulus'] = sys.argv[5]
         # kwargs['sample'] = sys.argv[7]
 
-    kwargs['n_days'] = 9 
+    kwargs['n_days'] = 6 
     
     kwargs['clf_name'] = 'LogisticRegressionCV'
     # kwargs['clf_name'] = 'LDA'
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     # kwargs['inner_score']= 'roc_auc' 
     # kwargs['inner_score']= 'neg_log_loss' 
     kwargs['inner_score']= 'accuracy' 
-    kwargs['in_fold'] = 'loo' 
+    kwargs['in_fold'] = 'loo'
     kwargs['n_in'] = 5 
     kwargs['alpha'] = 1.0 
     
@@ -207,7 +207,7 @@ if __name__ == '__main__':
     options['clf'] = get_clf(**options) 
     print('clf', options['clf']) 
     
-    options['bins'] = ['ED']
+    options['bins'] = ['LD']
     options['stimulus'] = 'sample' 
     S1, S2, S12, S1_ci, S2_ci, S12_ci, S12_shuffle = get_projections(**options) 
 
@@ -217,10 +217,10 @@ if __name__ == '__main__':
     options['bins'] = ['MD']
     options['stimulus'] = 'distractor'
     D1, D2, D12, D1_ci, D2_ci, D12_ci, D12_shuffle = get_projections(**options) 
-    
+
     D12_mean_shuffle  = np.nanmean(D12_shuffle, axis=0) 
     D12_perc_shuffle = np.nanpercentile(D12_shuffle, [2.5, 97.5], axis=0) 
-
+    
     # plot figure
     create_figdir(**options) 
     
@@ -228,8 +228,8 @@ if __name__ == '__main__':
     options['task'] = sys.argv[2] 
     options['i_task'] = np.argwhere(options['tasks']==options['task'])[0][0] 
     
-    figname = 'overlap_sample_dist_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
-    figname = 'proj_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
+    # figname = 'overlap_sample_dist_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
+    figname = 'abs_over' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
     
     # if options['task']=='DPA': 
     fig, axis = plt.subplots(1, 2, figsize=(1.25*1.618*1.5*2, 1.618*1.5), num=figname) 
@@ -246,32 +246,32 @@ if __name__ == '__main__':
     # else:
     #     axis = plt.gcf().get_axes() 
     
-    axis[0].plot(gv.time, S1, color=gv.pal[options['i_task']])
-    axis[0].fill_between(gv.time, S1-S1_ci[:,0], S1+S1_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']]) 
-    
-    axis[0].plot(gv.time, S2, color=gv.pal[options['i_task']], ls='--')
-    axis[0].fill_between(gv.time, S2-S2_ci[:,0], S2+S2_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
-    
-    # axis[0].plot(gv.time, S12, color=gv.pal[options['i_task']])
-    # axis[0].fill_between(gv.time, S12-S12_ci[:,0], S12+S12_ci[:,1],
+    # axis[0].plot(gv.time, S1, color=gv.pal[options['i_task']])
+    # axis[0].fill_between(gv.time, S1-S1_ci[:,0], S1+S1_ci[:,1],
     #                      alpha=0.1, color=gv.pal[options['i_task']]) 
+    
+    # axis[0].plot(gv.time, S2, color=gv.pal[options['i_task']], ls='--')
+    # axis[0].fill_between(gv.time, S2-S2_ci[:,0], S2+S2_ci[:,1],
+    #                      alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
+    
+    axis[0].plot(gv.time, S12, color=gv.pal[options['i_task']])
+    axis[0].fill_between(gv.time, S12-S12_ci[:,0], S12+S12_ci[:,1],
+                         alpha=0.1, color=gv.pal[options['i_task']]) 
     
     axis[0].plot(gv.time, S12_mean_shuffle, '--' , color=gv.pal[options['i_task']]) 
     axis[0].fill_between(gv.time, S12_perc_shuffle[0], S12_perc_shuffle[1], color=gv.pal[options['i_task']], alpha=.1) 
     
-    axis[1].plot(gv.time, D1, color=gv.pal[options['i_task']])
-    axis[1].fill_between(gv.time, D1-D1_ci[:,0], D1+D1_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']]) 
-
-    axis[1].plot(gv.time, D2, color=gv.pal[options['i_task']], ls='--')
-    axis[1].fill_between(gv.time, D2-D2_ci[:,0], D2+D2_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
-    
-    # axis[1].plot(gv.time, D12, color=gv.pal[options['i_task']])
-    # axis[1].fill_between(gv.time, D12-D12_ci[:,0], D12+D12_ci[:,1],
+    # axis[1].plot(gv.time, D1, color=gv.pal[options['i_task']])
+    # axis[1].fill_between(gv.time, D1-D1_ci[:,0], D1+D1_ci[:,1],
     #                      alpha=0.1, color=gv.pal[options['i_task']]) 
+
+    # axis[1].plot(gv.time, D2, color=gv.pal[options['i_task']], ls='--')
+    # axis[1].fill_between(gv.time, D2-D2_ci[:,0], D2+D2_ci[:,1],
+    #                      alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
+    
+    axis[1].plot(gv.time, D12, color=gv.pal[options['i_task']])
+    axis[1].fill_between(gv.time, D12-D12_ci[:,0], D12+D12_ci[:,1],
+                         alpha=0.1, color=gv.pal[options['i_task']]) 
     
     axis[1].plot(gv.time, D12_mean_shuffle, '--' , color=gv.pal[options['i_task']]) 
     axis[1].fill_between(gv.time, D12_perc_shuffle[0], D12_perc_shuffle[1], color=gv.pal[options['i_task']], alpha=.1) 

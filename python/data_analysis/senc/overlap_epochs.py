@@ -42,8 +42,8 @@ def get_X_S1_X_S2(**options):
                                      avg_noise=options['avg_noise_BL'],
                                      unit_var=options['unit_var']) 
     
-    # X1 = pp.avg_epochs(X1, ['STIM', 'ED', 'DIST', 'MD', 'CUE',  'LD'])
-    # X2 = pp.avg_epochs(X2, ['STIM', 'ED', 'DIST', 'MD', 'CUE', 'LD'])
+    X1 = pp.avg_epochs(X1, ['STIM', 'ED', 'DIST', 'MD', 'CUE',  'LD'])
+    X2 = pp.avg_epochs(X2, ['STIM', 'ED', 'DIST', 'MD', 'CUE', 'LD'])
     
     return X1, X2
 
@@ -58,8 +58,8 @@ def get_overlap(X_D1, X_D2, Delta_sample, **kwargs):
     overlap = np.zeros( Delta_sample.shape[-1] )
     
     if kwargs['bins'] is not None: 
-        Delta_bins = np.nanmean( Delta_sample[:, kwargs['bins']], axis=-1) 
-        # Delta_bins = Delta_sample[:,1]
+        # Delta_bins = np.nanmean( Delta_sample[:, kwargs['bins']], axis=-1) 
+        Delta_bins = Delta_sample[:,1]
         for i_epoch in range(Delta_sample.shape[-1]): 
             overlap[i_epoch] = cos_between(Delta_bins, Delta_distractor[:, i_epoch]) 
     else: 
@@ -127,8 +127,8 @@ def plot_overlap(overlap, overlap_ci, overlap_shuffle, **options):
     
     fig = plt.figure(figtitle) 
 
-    # gv.time = [0,1,2,3,4,5]
-    plt.plot(gv.time, overlap,'k')        
+    gv.time = [0,1,2,3,4,5]
+    plt.plot(gv.time, overlap,'ko') 
     plt.xlabel('Time (s)')
     
     if options['bins'] is not None : 
@@ -143,7 +143,7 @@ def plot_overlap(overlap, overlap_ci, overlap_shuffle, **options):
     # plt.xlim([0,3]) 
     
     if options['ci']:
-        plt.fill_between(gv.time, overlap-overlap_ci[:,0], overlap+overlap_ci[:,1], alpha=0.1) 
+        plt.errorbar(gv.time, overlap, yerr=overlap_ci.T, ls=None) 
     
     if options['shuffle']:
         mean = np.nanmean(overlap_shuffle, axis=0) 
@@ -153,13 +153,15 @@ def plot_overlap(overlap, overlap_ci, overlap_shuffle, **options):
     
     plt.ylim([-.25, 0.5]) 
     plt.yticks([-0.25, 0, .25, .5]) 
-    plt.xticks([0,2,4,6,8,10,12,14]) 
+    # plt.xticks([0,2,4,6,8,10,12,14]) 
+    plt.xticks( [0,1,2,3,4,5], ['Sample', 'Early delay', 'Distractor',
+                    'Middle delay', 'Cue', 'Late delay'])
     
-    pl.add_vlines() 
-    plt.text(2.5, 0.55, 'Sample', horizontalalignment='center', fontsize=10) 
-    plt.text(5, 0.55, 'Dist.', horizontalalignment='center', fontsize=10) 
-    plt.text(7, 0.55, 'Cue', horizontalalignment='center', fontsize=10) 
-    plt.text(9.5, 0.55, 'Test', horizontalalignment='center', fontsize=10) 
+    # pl.add_vlines() 
+    # plt.text(2.5, 0.55, 'Sample', horizontalalignment='center', fontsize=10) 
+    # plt.text(5, 0.55, 'Dist.', horizontalalignment='center', fontsize=10) 
+    # plt.text(7, 0.55, 'Cue', horizontalalignment='center', fontsize=10) 
+    # plt.text(9.5, 0.55, 'Test', horizontalalignment='center', fontsize=10) 
     
     pl.save_fig(figtitle) 
     plt.close('all') 
@@ -168,29 +170,23 @@ if __name__ == '__main__':
     
     kwargs = dict() 
     kwargs['T_WINDOW']= 0.5 
-    kwargs['ci'] = 1 
+    kwargs['ci'] = 1
     kwargs['n_samples']= 1000 
-    kwargs['shuffle'] = 0 
+    kwargs['shuffle'] = 0
     kwargs['n_shuffles']= 1000 
     
-    kwargs['scaler'] = 'standard' 
-    kwargs['scaler_BL'] = 'robust' 
-    kwargs['avg_mean_BL'] = 0 
-    kwargs['avg_noise_BL'] = 1 
-    kwargs['unit_var'] = 1
-
-    kwargs['n_days'] = 9
+    kwargs['n_days'] = 9 
     kwargs['prescreen'] = True 
     kwargs['pval']= .05  # .05, .01, .001 
     
-    kwargs['standardize'] = False
+    kwargs['standardize'] = False 
     kwargs['fit_intercept'] = True 
     
     # kwargs['clf_name'] = 'LDA' 
     # kwargs['shrinkage'] = 'auto' 
     kwargs['clf_name'] = 'LogisticRegressionCV' 
     kwargs['penalty'] = 'l2' 
-    kwargs['n_lambda'] = 40 
+    kwargs['n_lambda'] = 100 
     kwargs['inner_score']= 'accuracy' 
     kwargs['in_fold'] = 'loo' 
     kwargs['n_in'] = 5 

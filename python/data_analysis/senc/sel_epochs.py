@@ -423,30 +423,34 @@ if __name__ == '__main__':
 
     # needed if comparing X_Si to X_Si BL
     kwargs['epochs'] = ['ED', 'MD', 'LD']
+
     kwargs['off_diag'] = 1
+    if kwargs['t_train'] == 'DIAG':
+        kwargs['off_diag'] = 0
+        
     # kwargs['t_train'] = 'LD'
     
     kwargs['add_vlines'] = 0
     kwargs['IF_SAVE'] = 0
     
-    kwargs['n_days'] = 6
+    kwargs['n_days'] = 9 
     
     kwargs['clf_name'] = 'LogisticRegressionCV'
     # kwargs['clf_name'] = 'LDA'
-    # kwargs['penalty'] = 'l1'
+    kwargs['penalty'] = 'l2'
     # kwargs['solver'] = 'saga'
     kwargs['n_lambda'] = 20
     
     kwargs['out_fold'] = 'stratified'
-    kwargs['n_out'] = 10
-    kwargs['outer_score'] = 'accuracy'
+    kwargs['n_out'] = 5
+    kwargs['outer_score'] = 'roc_auc'
     
     kwargs['in_fold'] = 'stratified'
-    kwargs['n_in'] = 10
-    kwargs['inner_score'] = 'accuracy'
+    kwargs['n_in'] = 5
+    kwargs['inner_score'] = 'neg_log_loss'
     
     kwargs['prescreen'] = True 
-    kwargs['pval'] = 0.05   
+    kwargs['pval'] = 0.05 
     kwargs['standardize'] = True 
     
     options = set_options(**kwargs)

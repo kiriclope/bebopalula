@@ -11,7 +11,8 @@ from sklearn.feature_selection import f_classif, SelectPercentile, SelectFpr
 from sklearn.pipeline import Pipeline 
 from sklearn.preprocessing import StandardScaler, RobustScaler 
 
-plt.ioff() 
+# plt.ioff() 
+plt.ion() 
 
 sys.path.insert(0, '../') 
 
@@ -157,10 +158,10 @@ def sel_time(**options):
 def plot_sel_time(sel, sel_ci=None, sel_shuffle=None, **options): 
     create_figdir(**options)
     
-    if(len(options['tasks'])==2): 
-        figtitle = 'sel_%s_time_Dual_%s_day_%s_trials' % ( options['obj'], str(options['day']), options['trials'] ) 
+    if(len(options['task'])=='Dual'): 
+        figtitle = '%s_time_%s_Dual_%s_day_%s_trials' % ( options['obj'], options['stimulus'], str(options['day']), options['trials'] ) 
     else: 
-        figtitle = 'sel_%s_time_day_%s_%s_trials' % ( options['obj'], str(options['day']), options['trials'] ) 
+        figtitle = '%s_time_%s_day_%s_%s_trials' % ( options['obj'], options['stimulus'], str(options['day']), options['trials'] ) 
 
     if options['obj']=='score':
         if options['off_diag']:
@@ -222,13 +223,14 @@ def plot_sel_time(sel, sel_ci=None, sel_shuffle=None, **options):
         
     if options['obj']=='score': 
         plt.ylabel('Score') 
-        plt.ylim([0.4, 1.1]) 
-        plt.yticks([.5, 0.75, 1.0]) 
+        plt.ylim([0.25, 1.1]) 
+        plt.yticks([.25, .5, 0.75, 1.0]) 
     
     if(options['IF_SAVE']==1):
         pl.save_fig(figtitle, 1)
 
-    # plt.show()
+    plt.close('all')
+    plt.show()
     
 if __name__ == '__main__':
     
@@ -236,17 +238,17 @@ if __name__ == '__main__':
     
     kwargs['T_WINDOW'] = 0.5 
     
-    kwargs['ci'] = 1 
-    kwargs['n_samples'] = 1000
+    kwargs['ci'] = 0 
+    kwargs['n_samples'] = 100 
     kwargs['shuffle'] = 0 
-    kwargs['n_shuffles'] = 1000 
+    kwargs['n_shuffles'] = 100 
     
     kwargs['scaler'] = 'standard' #'standard' # if not standardized gives strange results for norm 
-    kwargs['scaler_BL'] = 'robust' 
+    kwargs['scaler_BL'] = 'standard' 
     kwargs['avg_mean_BL'] = 0 
     kwargs['avg_noise_BL'] = 1 
     kwargs['unit_var'] = 1 
-    kwargs['n_days'] = 6
+    kwargs['n_days'] = 9
     kwargs['tasks'] = np.array(['DPA', 'DualGo', 'DualNoGo', 'Dual']) 
     # kwargs['tasks'] = ['DPA', 'Dual'] 
     
@@ -258,8 +260,11 @@ if __name__ == '__main__':
         kwargs['obj'] = sys.argv[5] 
         kwargs['stimulus'] = sys.argv[6] 
         kwargs['bins'] = sys.argv[7] 
-    
-    kwargs['off_diag'] = 1 
+
+    kwargs['off_diag'] = 1
+    if kwargs['bins'] == 'DIAG':
+        kwargs['off_diag'] = 0
+        
     # kwargs['bins'] = 'LD' 
     # kwargs['t_train'] = 'LD' 
     
@@ -267,21 +272,23 @@ if __name__ == '__main__':
     # kwargs['lbd'] = 'lambda_min' 
     
     kwargs['clf_name'] = 'LogisticRegressionCV'
-    kwargs['clf_name'] = 'LDA'
+    # kwargs['clf_name'] = 'LDA'
+    # kwargs['shrinkage'] = 1
+    
     kwargs['penalty'] = 'l2'
     # kwargs['solver'] = 'saga'
     kwargs['n_lambda'] = 20
     
-    kwargs['out_fold'] = 'loo'
-    kwargs['n_out'] = 5
-    kwargs['outer_score'] = 'accuracy'
+    kwargs['in_fold'] = 'stratified'
+    kwargs['n_in'] = 10
+    kwargs['inner_score'] = 'neg_log_loss'
     
-    kwargs['in_fold'] = 'loo'
-    kwargs['n_in'] = 5
-    kwargs['inner_score'] = 'accuracy'
+    kwargs['out_fold'] = 'stratified'
+    kwargs['n_out'] = 10
+    kwargs['outer_score'] = 'roc_auc' 
     
     kwargs['prescreen'] = True 
-    kwargs['pval'] = 0.001  
+    kwargs['pval'] = 0.05 
     kwargs['standardize'] = True 
         
     options = set_options(**kwargs) 
@@ -320,7 +327,6 @@ if __name__ == '__main__':
         options['tasks'] = np.array(['DPA', 'DualGo', 'DualNoGo', 'Dual']) 
         # options['tasks'] = np.array(['DPA','Dual']) 
         # options['bins'] = 'ED' 
-        options['stimulus']= 'sample' 
         options['i_task'] = np.argwhere(options['tasks']==options['task'])[0][0] 
         print(options['tasks'], options['task'], options['i_task']) 
         

@@ -52,6 +52,7 @@ def get_coding_dir(**kwargs):
 
     options = kwargs.copy()
     options['trials'] = 'correct'
+    
     if options['stimulus'] == 'distractor':
         options['task'] = 'Dual'
         options['tasks'] = ['Dual']
@@ -97,11 +98,12 @@ def get_avg_proj(X_S1, X_S2, coefs, model):
     for i_epoch in range(X_S1.shape[-1]): 
         # X_proj[i_epoch] = np.sum( np.dot(coefs, X_S1[..., i_epoch].T), axis=0 ) 
         # X_proj[i_epoch] -= np.sum( np.dot(coefs, X_S2[..., i_epoch].T), axis=0 ) 
-        
-        X_proj[i_epoch] = np.mean( np.dot(coefs, X_S2[..., i_epoch].T), axis=0 ) 
-        X_proj[i_epoch] -= np.mean( np.dot(coefs, X_S1[..., i_epoch].T), axis=0 ) 
+
+        a = np.mean( np.dot(coefs, X_S2[..., i_epoch].T), axis=0 )
+        b = np.mean( np.dot(coefs, X_S1[..., i_epoch].T), axis=0 ) 
+        X_proj[i_epoch] = np.sqrt((a-b)**2)
     
-    return X_proj / 2.0 
+    return X_proj 
 
 # return X_proj / (X_S1.shape[0]+X_S2.shape[0]) 
 
@@ -113,16 +115,17 @@ def get_projections(**options):
     eps = 1
     if options['stimulus'] == 'distractor':
         eps = -1
-        
-    options['stimulus'] = 'sample' 
-    # get projection of sample trials onto sample axis
+        options['task'] = 'Dual'
+    
+    # options['stimulus'] = 'sample' 
+    # get projection of sample trials onto sample axis 
     print(options['stimulus'], options['task'])
     X1, X2 = get_X_S1_X_S2(**options) 
     models=[1,2]
     
     P1 = get_proj(X1, coefs[0], models[0]) 
     P2 = get_proj(X2, coefs[0], models[0]) 
-    P12 = get_avg_proj(X1, eps*X2, coefs[0], models[0]) 
+    P12 = get_avg_proj(X1, X2, coefs[0], models[0]) 
 
     P1_ci = []
     _, P1_ci = my_bootstraped_ci(X1, X2,
@@ -145,9 +148,6 @@ def get_projections(**options):
                                lambda x, y: get_avg_proj(x, y, coefs[0], models[0]),
                                n_samples=options['n_shuffles'])
     
-    # mean_shuffle  = np.nanmean(P12_shuffle, axis=0) 
-    # perc_shuffle = np.nanpercentile(P12_shuffle, [2.5, 97.5], axis=0) 
-
     return P1, P2, P12, P1_ci, P2_ci, P12_ci, P12_shuffle
 
 if __name__ == '__main__':
@@ -164,9 +164,9 @@ if __name__ == '__main__':
     
     kwargs['scaler'] = 'standard' 
     kwargs['scaler_BL'] = 'robust' 
-    kwargs['avg_mean_BL'] = 0 
+    kwargs['avg_mean_BL'] = 1 
     kwargs['avg_noise_BL'] = 1 
-    kwargs['unit_var'] = 1 
+    kwargs['unit_var'] = 1
     
     kwargs['tasks'] = np.array(['DPA', 'DualGo', 'DualNoGo']) 
     # kwargs['tasks'] = ['DPA', 'Dual'] 
@@ -189,7 +189,7 @@ if __name__ == '__main__':
     kwargs['n_lambda'] = 100 
     
     kwargs['prescreen'] = True  
-    kwargs['pval']= .05 # .05, .01, .001 
+    kwargs['pval']= .05 # .05, .01, .001  
     
     kwargs['standardize'] = False 
     kwargs['fit_intercept'] = True 
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     # kwargs['inner_score']= 'roc_auc' 
     # kwargs['inner_score']= 'neg_log_loss' 
     kwargs['inner_score']= 'accuracy' 
-    kwargs['in_fold'] = 'loo' 
+    kwargs['in_fold'] = 'loo'
     kwargs['n_in'] = 5 
     kwargs['alpha'] = 1.0 
     
@@ -217,10 +217,10 @@ if __name__ == '__main__':
     options['bins'] = ['MD']
     options['stimulus'] = 'distractor'
     D1, D2, D12, D1_ci, D2_ci, D12_ci, D12_shuffle = get_projections(**options) 
-    
+
     D12_mean_shuffle  = np.nanmean(D12_shuffle, axis=0) 
     D12_perc_shuffle = np.nanpercentile(D12_shuffle, [2.5, 97.5], axis=0) 
-
+    
     # plot figure
     create_figdir(**options) 
     
@@ -228,8 +228,8 @@ if __name__ == '__main__':
     options['task'] = sys.argv[2] 
     options['i_task'] = np.argwhere(options['tasks']==options['task'])[0][0] 
     
-    figname = 'overlap_sample_dist_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
-    figname = 'proj_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
+    # figname = 'overlap_sample_dist_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
+    figname = 'distance_' + options['task'] + '_day_' + options['day'] + '_' + options['trials'] 
     
     # if options['task']=='DPA': 
     fig, axis = plt.subplots(1, 2, figsize=(1.25*1.618*1.5*2, 1.618*1.5), num=figname) 
@@ -237,41 +237,43 @@ if __name__ == '__main__':
     pl.add_vlines(axis[1]) 
     
     axis[0].set_xlabel('Time (s)') 
-    axis[0].set_ylabel('Overlap with Sample axis') 
-    axis[0].set_xticks([0,2,4,6,8,10,12,14])
+    axis[0].set_ylabel('Sample Readout') 
+    axis[0].set_xticks([0,2,4,6,8,10,12,14]) 
+    axis[0].set_ylim([-.25,5]) 
     
     axis[1].set_xlabel('Time (s)') 
-    axis[1].set_ylabel('Overlap with Dist. axis') 
+    axis[1].set_ylabel('Distractor Readout') 
     axis[1].set_xticks([0,2,4,6,8,10,12,14]) 
+    axis[1].set_ylim([-.25,8]) 
     # else:
     #     axis = plt.gcf().get_axes() 
     
-    axis[0].plot(gv.time, S1, color=gv.pal[options['i_task']])
-    axis[0].fill_between(gv.time, S1-S1_ci[:,0], S1+S1_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']]) 
-    
-    axis[0].plot(gv.time, S2, color=gv.pal[options['i_task']], ls='--')
-    axis[0].fill_between(gv.time, S2-S2_ci[:,0], S2+S2_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
-    
-    # axis[0].plot(gv.time, S12, color=gv.pal[options['i_task']])
-    # axis[0].fill_between(gv.time, S12-S12_ci[:,0], S12+S12_ci[:,1],
+    # axis[0].plot(gv.time, S1, color=gv.pal[options['i_task']])
+    # axis[0].fill_between(gv.time, S1-S1_ci[:,0], S1+S1_ci[:,1],
     #                      alpha=0.1, color=gv.pal[options['i_task']]) 
+    
+    # axis[0].plot(gv.time, S2, color=gv.pal[options['i_task']], ls='--')
+    # axis[0].fill_between(gv.time, S2-S2_ci[:,0], S2+S2_ci[:,1],
+    #                      alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
+    
+    axis[0].plot(gv.time, S12, color=gv.pal[options['i_task']])
+    axis[0].fill_between(gv.time, S12-S12_ci[:,0], S12+S12_ci[:,1],
+                         alpha=0.1, color=gv.pal[options['i_task']]) 
     
     axis[0].plot(gv.time, S12_mean_shuffle, '--' , color=gv.pal[options['i_task']]) 
     axis[0].fill_between(gv.time, S12_perc_shuffle[0], S12_perc_shuffle[1], color=gv.pal[options['i_task']], alpha=.1) 
     
-    axis[1].plot(gv.time, D1, color=gv.pal[options['i_task']])
-    axis[1].fill_between(gv.time, D1-D1_ci[:,0], D1+D1_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']]) 
-
-    axis[1].plot(gv.time, D2, color=gv.pal[options['i_task']], ls='--')
-    axis[1].fill_between(gv.time, D2-D2_ci[:,0], D2+D2_ci[:,1],
-                         alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
-    
-    # axis[1].plot(gv.time, D12, color=gv.pal[options['i_task']])
-    # axis[1].fill_between(gv.time, D12-D12_ci[:,0], D12+D12_ci[:,1],
+    # axis[1].plot(gv.time, D1, color=gv.pal[options['i_task']])
+    # axis[1].fill_between(gv.time, D1-D1_ci[:,0], D1+D1_ci[:,1],
     #                      alpha=0.1, color=gv.pal[options['i_task']]) 
+
+    # axis[1].plot(gv.time, D2, color=gv.pal[options['i_task']], ls='--')
+    # axis[1].fill_between(gv.time, D2-D2_ci[:,0], D2+D2_ci[:,1],
+    #                      alpha=0.1, color=gv.pal[options['i_task']], ls='--') 
+    
+    axis[1].plot(gv.time, D12, color=gv.pal[options['i_task']])
+    axis[1].fill_between(gv.time, D12-D12_ci[:,0], D12+D12_ci[:,1],
+                         alpha=0.1, color=gv.pal[options['i_task']]) 
     
     axis[1].plot(gv.time, D12_mean_shuffle, '--' , color=gv.pal[options['i_task']]) 
     axis[1].fill_between(gv.time, D12_perc_shuffle[0], D12_perc_shuffle[1], color=gv.pal[options['i_task']], alpha=.1) 
