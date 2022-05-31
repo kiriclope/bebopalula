@@ -1,0 +1,80 @@
+import sys, os, importlib 
+from importlib import reload
+from joblib import Parallel, delayed
+
+import struct 
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+import params as gv 
+importlib.reload(sys.modules['params']) 
+
+gv.init_param()
+
+# con_path = '/homecentral/alexandre.mahrach/IDIBAPS/connectivity/%dpop/N%d/K%d/' % (gv.n_pop, gv.n_neurons, gv.K) 
+
+con_path = '/homecentral/alexandre.mahrach/IDIBAPS/cpp/model/simulations/%dpop/%s/N%d/K%d/' % (gv.n_pop, gv.folder, gv.n_neurons, gv.K)
+
+if(gv.IF_STRUCTURE): 
+    if(gv.IF_SPEC): 
+        con_path += 'spec/kappa_%.2f/' % gv.KAPPA 
+    elif(gv.IF_RANK_2): 
+        con_path += 'spec/kappa_%.2f_kappa_1_%.2f/' % (gv.KAPPA, gv.KAPPA_1) 
+    elif(gv.IF_RING): 
+        con_path += 'ring/kappa_%.2f/' % gv.KAPPA 
+
+figtitle = 'connectivity' 
+fig = plt.figure(figtitle, figsize=(1.25*1.618*1.5*3, 1.618*1.25)) 
+
+dtype = np.dtype("i4")
+
+try: 
+    with open(con_path + 'con_mat.dat', 'rb') as f: 
+        con_mat = np.fromfile(f, dtype).reshape(gv.n_neurons  * gv.n_size, gv.n_neurons * gv.n_size) 
+        print(con_mat.shape) 
+except EOFError:
+    pass
+
+f.close()
+
+con_prob = np.zeros(gv.n_size) 
+# for i in range(gv.n_size):
+#     con_prob[i] = sum( np.diag(con_mat, -i) ) + sum( np.diag(con_mat, gv.n_size-i) ) 
+theta = np.linspace(0, np.pi, gv.n_size)
+
+def parloop(con_mat, i, n_size): 
+    return sum( np.diag(con_mat, -i) ) + sum( np.diag(con_mat, n_size-i) )
+
+con_prob = np.array( Parallel(n_jobs=-1)(delayed(parloop)(con_mat, i, gv.n_size) for i in range(gv.n_size) ) )
+    
+ax = fig.add_subplot(1,3,1) 
+im = ax.imshow(con_mat, cmap='jet', vmin=0, vmax=1, origin='lower') 
+ax.grid(False) 
+plt.xlabel('Presynaptic') 
+plt.ylabel('Postsynaptic') 
+ax.set_title('Connections')
+
+ax = fig.add_subplot(1,3,2)
+plt.plot(theta, con_prob/gv.n_size) 
+plt.xlabel('$\\theta$') 
+plt.ylabel('Prob.') 
+plt.xticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi],
+           ['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{2}$', r'$\pi$'])
+
+try: 
+    with open(con_path + 'n_post.dat', 'rb') as f: 
+        n_post = np.fromfile(f, dtype).reshape(gv.n_pop, gv.n_size) 
+        print(n_post.shape) 
+except EOFError:
+    pass
+
+f.close()
+
+ax = fig.add_subplot(1,3,3) 
+
+for i_pop in range(gv.n_pop): 
+    plt.hist(n_post[i_pop], histtype='step', color=gv.pal[i_pop]) 
+
+plt.xlabel('K') 
+plt.ylabel('Count') 
