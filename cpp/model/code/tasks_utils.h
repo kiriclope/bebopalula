@@ -34,7 +34,9 @@ void christos_tasks() {
   // CUE 
   if(t_time-TIME_STEADY >= T_CUE_ON && t_time-TIME_STEADY < T_CUE_OFF  && !SWITCH_ON) {
     for(i=0;i<n_neurons; i++) 
-      ff_inputs[i] = ext_inputs_scaled[which_pop[i]] + sqrt_Ka[0] * A_CUE[which_pop[i]] * ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - PHI_EXT) ) ; 
+      ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	+ sqrt_Ka[0] * A_CUE[which_pop[i]]
+	* ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - PHI_EXT) ) ; 
     SWITCH_ON = 1 ; 
   }
   if(t_time-TIME_STEADY >= T_CUE_OFF && SWITCH_ON) { 
@@ -46,7 +48,9 @@ void christos_tasks() {
   // ERASE BUMP 
   if(t_time-TIME_STEADY >= T_ERASE_ON && t_time-TIME_STEADY < T_ERASE_OFF  && !SWITCH_OFF) { 
     for(i=0;i<n_neurons; i++) 
-      ff_inputs[i] = ext_inputs_scaled[which_pop[i]] + sqrt_Ka[0] * A_ERASE[which_pop[i]] * (1.0 + EPS_ERASE[which_pop[i]] * cos( theta[i] - PHI_EXT)) ; 
+      ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	+ sqrt_Ka[0] * A_ERASE[which_pop[i]]
+	* (1.0 + EPS_ERASE[which_pop[i]] * cos( theta[i] - PHI_EXT)) ; 
     SWITCH_OFF = 1 ; 
   }
   if(t_time-TIME_STEADY >= T_ERASE_OFF && SWITCH_OFF) { 
@@ -57,29 +61,37 @@ void christos_tasks() {
 }
 
 void DPA_task() {
-  double kappa_ext = KAPPA_EXT / sqrt_K ;
-  
+  double kappa_ext = KAPPA_EXT / sqrt_Ka[0] ; 
+  double kappa_dist = KAPPA_DIST / sqrt_Ka[0] ;  
+  double kappa_test = KAPPA_TEST / sqrt_Ka[0] ; 
+ 
   // Sample stimulus ON 
-  if(t_time-TIME_STEADY > T_SAMPLE_ON && t_time-TIME_STEADY <= T_SAMPLE_ON + 2.0 * DT) {
-      
-    for(i=0;i<n_per_pop[0]; i++) {
-      if(IF_SPEC) 
+  if(t_time-TIME_STEADY >= T_SAMPLE_ON && t_time-TIME_STEADY < T_SAMPLE_OFF  && !SWITCH_ON) {     
+    if(IF_SPEC) 
+      for(i=0;i<n_per_pop[0]; i++) 
 	ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  kappa_ext * cos( theta[i] + PHI_EXT ) ) ; 
-      if(IF_LOW_RANK) 
-	ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  kappa_ext * ksi[i] ) ;
-      if(IF_RING)
+    if(IF_LOW_RANK) 
+      for(i=0;i<n_per_pop[0]; i++) 
+	ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  kappa_ext * sample[i] ) ; 
+    if(IF_RING)
+      for(i=0;i<n_per_pop[0]; i++) 
 	ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  KAPPA_EXT * cos( theta[i] + PHI_EXT ) ) ;
-    }
+    
+    SWITCH_ON = 1 ; 
   }
+
   // Sample stimulus OFF
-  if(t_time-TIME_STEADY > T_SAMPLE_OFF && t_time-TIME_STEADY <= T_SAMPLE_OFF + 2.0*DT) 
+  if(t_time-TIME_STEADY >= T_SAMPLE_OFF && SWITCH_ON) { 
     for(i=0;i<n_per_pop[0]; i++) 
       ff_inputs[i] = ext_inputs_scaled[0] ;
-
+    SWITCH_ON = 0 ; 
+  }
+  
   // Test stimulus ON 
   if(t_time-TIME_STEADY > T_TEST_ON && t_time-TIME_STEADY <= T_TEST_ON + 2.0*DT) { 
     for(i=0;i<n_per_pop[0]; i++) 
-      ff_inputs[i] = ( 1.0 + kappa_ext * unif(rand_gen) ) * ext_inputs_scaled[0] ;       
+      ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  kappa_test * distractor[i] ) ; 
+    /* ff_inputs[i] = ( 1.0 + kappa_ext * unif(rand_gen) ) * ext_inputs_scaled[0] ; */ 
   } 
   
   // Test stimulus OFF 
@@ -90,30 +102,52 @@ void DPA_task() {
 
 void DRT_task() {
   double kappa_dist = KAPPA_DIST / sqrt_K ; 
+  double kappa_cue = KAPPA_CUE / sqrt_K ; 
   
   // Distractor ON 
   if(t_time-TIME_STEADY > T_DIST_ON && t_time-TIME_STEADY <= T_DIST_ON + 2.0*DT) {
-    for(i=0;i<n_per_pop[0]; i++) { 
-      /* ff_inputs[i] = ( 1.0 + KAPPA_EXT / sqrt(K) ) * ext_inputs_scaled[which_pop[i]] ; */       
       if(IF_SPEC) { 
-	if(RANK==1) 
-	  ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist * unif(rand_gen) ) ; 	
-	if(RANK==2) 
-	  ff_inputs[idx_perm[i]] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist * cos( theta[i] + PHI_DIST) ) ; 
-      }	
-      if(IF_LOW_RANK) {
-	if(RANK==1)
-	  ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist * unif(rand_gen) ) ; 
-	if(RANK==2)
-	  ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist* ksi_1[i] ) ; 
-      } 	
-    }
+	for(i=0;i<n_per_pop[0]; i++) { 
+	  if(RANK==1) 
+	    ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist * unif(rand_gen) ) ; 
+	  if(RANK==2) 
+	    ff_inputs[idx_perm[i]] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist * cos( theta[i] + PHI_DIST) ) ; 
+	}
+      }
+      
+      if(IF_LOW_RANK) 
+	for(i=0;i<n_per_pop[0]; i++) 
+	  ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  kappa_dist * distractor[i] ) ;            
   }
+  
   // Distractor OFF
   if(t_time-TIME_STEADY > T_DIST_OFF && t_time-TIME_STEADY <= T_DIST_OFF + 2.0*DT) {
     for(i=0;i<n_per_pop[0]; i++) 
-      ff_inputs[i] = ext_inputs_scaled[0] ; 
-  } 
+      ff_inputs[i] = ext_inputs_scaled[0] ;    
+  }
+
+  // Cue/Reward ON
+  if(t_time-TIME_STEADY > T_RWD_ON && t_time-TIME_STEADY <= T_RWD_ON + 2.0*DT) {
+      if(IF_SPEC) { 
+	for(i=0;i<n_per_pop[0]; i++) { 
+	  if(RANK==1) 
+	    ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 + kappa_cue * unif(rand_gen) ) ; 
+	  if(RANK==2) 
+	    ff_inputs[idx_perm[i]] = ext_inputs_scaled[0] * ( 1.0 + kappa_dist * cos( theta[i] + PHI_DIST) ) ; 
+	}
+      }
+      
+      if(IF_LOW_RANK) 
+	for(i=0;i<n_per_pop[0]; i++) 
+	  ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 +  kappa_cue * distractor[i] ) ; 
+  }
+  
+  // Rwd OFF
+  if(t_time-TIME_STEADY > T_RWD_OFF && t_time-TIME_STEADY <= T_RWD_OFF + 2.0*DT) {
+    for(i=0;i<n_per_pop[0]; i++) 
+      ff_inputs[i] = ext_inputs_scaled[0] ;    
+  }
+  
 } 
 
 void step_input() {
@@ -124,24 +158,34 @@ void step_input() {
     for(i=0;i<n_neurons; i++) { 
       if(IF_STRUCTURE) { 
 	if(IF_RING) 
-	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * ( 1.0 +  KAPPA_EXT * cos( theta[i] + 2.0 * PHI_EXT * M_PI ) ) ; 
+	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	    + sqrt_Ka[0] * A_CUE[which_pop[i]] 
+	    * ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT * M_PI) ) ; 
+	  /* ff_inputs[i] = ext_inputs_scaled[which_pop[i]] */
+	  /*   * ( 1.0 +  KAPPA_EXT * cos( theta[i] - PHI_EXT ) ) ;  */
 	if(IF_SPEC && i<n_per_pop[0]) 
-	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * ( 1.0 +  kappa_ext * cos( theta[i] + 2.0 * PHI_EXT ) ) ; 
+	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	    * ( 1.0 +  kappa_ext * cos( theta[i] - PHI_EXT ) ) ; 
 	if(IF_LOW_RANK) 
 	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * ( 1.0 +  kappa_ext * ksi[i] ) ;
 	if(IF_GAUSS) 
-	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]] + sqrt_Ka[0] * A_CUE[which_pop[i]]
-	    * ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT* M_PI ) ) ; 
+	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	    + sqrt_Ka[0] * A_CUE[which_pop[i]] 
+	    * ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT * M_PI) ) ; 
       }
-      else 
-	ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * A_STEP[which_pop[i]] ; 
-    }      
+      else
+	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * A_STEP[which_pop[i]] ; 
+    } 
     SWITCH_ON = 1 ; 
   }
   // Sample stimulus OFF 
   if(t_time-TIME_STEADY >= T_SAMPLE_OFF && SWITCH_ON) { 
     for(i=0;i<n_neurons; i++) 
-      ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ;
+	if(IF_TUNED_FF) 
+	    ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	      * ( 1.0 +  KAPPA_EXT/sqrt_Ka[0] * cos(theta[i]-PHI_EXT)) ; 
+	else
+	  ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; 
     SWITCH_ON = 0 ; 
   } 
 } 

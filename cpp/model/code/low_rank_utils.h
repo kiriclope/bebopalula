@@ -137,4 +137,43 @@ void create_path_ff_left_right(string &path) {
   path += "/ff_mean_" + str_mean_ff + "_var_left_" + str_var_ff_left +"_right_" + str_var_ff_right  + "_ortho_" + str_var_ortho ; 
 }
 
+void multivariate_ksi_stimuli(int size) {
+
+  // alloc gsl vectors and cov matrix 
+  gsl_vector *x = gsl_vector_calloc(size),
+    *mean = gsl_vector_calloc(size);
+  gsl_matrix *m = gsl_matrix_alloc(size, size),
+    *rm = gsl_matrix_alloc(size, size);
+  gsl_rng *r;
+
+  // init gsl seed 
+  r = gsl_rng_alloc(gsl_rng_mt19937) ; 
+  gsl_rng_set(r, initime) ; 
+  printf("The SEED is %li.\n\n",initime) ; 
+  
+  // init gsl vectors and cov matrix 
+  for(int i=0; i<size; i++) {
+    gsl_vector_set(x, i, 0.0) ; 
+    for(int j=0; j<size; j++) 
+      gsl_matrix_set(m, i, j, COVAR_MAT[i+j*size]) ; 
+  }
+
+  FILE *f;
+  f = fopen(path + "/gsl_rmvn_vec.txt", "w") ; 
+  
+  for(int k=0; k<n_neurons; k++){ 
+    rmvnorm(r, size, mean, m, x) ; 
+    if(k<10) 
+      for(int i=0; i<size; i++) 
+	cout << gsl_vector_get(x, i) << " " ; 
+    cout << endl ;
+    
+    for(int i=0; i<size; i++) 
+      fprintf(f, "%g ", gsl_vector_get(x,i) ) ; 
+    fprintf(f, "\n") ; 
+    
+  } 
+  
+} 
+
 #endif

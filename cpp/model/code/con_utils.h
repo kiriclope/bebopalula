@@ -263,7 +263,7 @@ void init_X() {
   
   for(i=0; i<n_pop; i++) 
     for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++)      
-      X[j] = fmod( (double) (j-cum_n_per_pop[i]) , (double) n_per_pop[i] ) * L / (double) n_per_pop[i] ;     
+      X[j] = fmod( (double) (j-cum_n_per_pop[i]) , (double) n_per_pop[i] ) * 2.0 * M_PI / (double) n_per_pop[i] ;     
   
   cout << "X: " ; 
   for(i=0; i<10; i++) 
@@ -365,8 +365,12 @@ void init_ksi() {
     for(i=0; i<n_pop; i++) { 
       norm = 0 ; 
       for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++) { 
-	ksi[j] = MEAN_KSI + sqrt(VAR_KSI-COVAR_KSI) * white_noise(ksi_gen) 
-	  + sqrt(COVAR_KSI) * gauss[j] ; 
+	ksi[j] = MEAN_KSI 
+	  /* + sqrt(abs(VAR_KSI-COVAR_KSI-COVAR_KSI_SAMPLE-COVAR_KSI_DIST)) * white_noise(ksi_gen)  */
+	  /* + sqrt(COVAR_KSI) * shared_ksi[j]  */
+	  + sqrt(abs(VAR_KSI-COVAR_KSI_SAMPLE-COVAR_KSI_DIST)) * white_noise(ksi_gen) 
+	  + sqrt(COVAR_KSI_SAMPLE) * shared_sample[j] 
+	  - sqrt(COVAR_KSI_DIST) * shared_dist[j] ; 
 	norm += ksi[j]*ksi[j] ; 
       } 
       
@@ -402,8 +406,11 @@ void init_ksi_1() {
     for(i=0; i<n_pop; i++) {
       norm = 0 ;
       for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++) { 
-	ksi_1[j] = MEAN_KSI_1 + sqrt(VAR_KSI_1-COVAR_KSI) * white_noise(ksi_1_gen)
-	  + sqrt(COVAR_KSI) * gauss[j] ; 
+	ksi_1[j] = MEAN_KSI_1 
+	  /* + sqrt(abs(VAR_KSI_1-COVAR_KSI-COVAR_KSI1_SAMPLE-COVAR_KSI1_DIST)) * white_noise(ksi_1_gen)  */
+	  /* + sqrt(COVAR_KSI) * shared_ksi[j]  */
+	  + sqrt(abs(COVAR_KSI1_SAMPLE-COVAR_KSI1_DIST)) * shared_sample[j] 
+	  + sqrt(COVAR_KSI1_DIST) * shared_dist[j] ; 
 	norm += ksi_1[j]*ksi_1[j] ; 
       } 
       
@@ -583,7 +590,7 @@ void func_con_prob() {
 
     if(IF_GAUSS) { 
       cout << "gaussian structure: " ; 
-      cout << " L, " << L <<", sigma, " ; 
+      /* cout << " L, " << L <<", sigma, " ; */
       cout << SIGMA[0] <<" "<< SIGMA[1] ; 
       cout <<" "<< SIGMA[2] <<" "<< SIGMA[3] <<  endl ; 
       

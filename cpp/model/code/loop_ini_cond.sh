@@ -10,53 +10,40 @@ IF_BIN=0
 
 IF_STP=1
 
-if (($IF_STP==1)); then
-    sed -ie "s/ M0 (double) .*/ M0 (double) 0.01 /" "$temp_globals" ; 
-fi
-if (($IF_STP==0)); then
-    sed -ie "s/ M0 (double) .*/ M0 (double) 0.5 /" "$temp_globals" ; 
-fi
-
-if (($IF_LIF==1)); then 
-    
-    if (($IF_STP==1)); then 
-	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0005 /" "$temp_globals" ; 
-    fi 
-    if (($IF_STP==0)); then 
-	sed -ie "s/ M0 (double) .*/ M0 (double) 0.0005 /" "$temp_globals" ; 
-    fi
-fi
+IF_GAUSS=0
+IF_RING=0
 
 IF_GEN_CON=0
 IF_SPEC=0 
-IF_LOW_RANK=0 
-RANK=1
+
+IF_LOW_RANK=1
+RANK=2
 FIX_MAP_SEED=1
 
 IF_HYSTERESIS=0 
 HYST_J_EE=0 
 
-IF_DPA=0 
-IF_DUAL=0  
+IF_DPA=0
+IF_DUAL=1
 IF_DRT=0 
 
-KAPPA_EXT=.25 
-PHI_EXT=1.5 # 0.5 or 1.5 it is multiplied by M_PI later 
+# KAPPA_EXT=.25 
+# PHI_EXT=0.5 # 0.5 or 1.5 it is multiplied by M_PI later 
 
-KAPPA_DIST=.25 
-PHI_DIST=0.0 # 0.0 or 1.0 it is multiplied by M_PI later 
+# KAPPA_DIST=.25 
+# PHI_DIST=0.0 # 0.0 or 1.0 it is multiplied by M_PI later 
 
-sed -ie "s/ KAPPA_EXT (double) .*/ KAPPA_EXT (double) ${KAPPA_EXT} /" "$temp_globals" ; 
-sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) ${PHI_EXT}*M_PI /" "$temp_globals" ; 
+# sed -ie "s/ KAPPA_EXT (double) .*/ KAPPA_EXT (double) ${KAPPA_EXT} /" "$temp_globals" ; 
+# sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) ${PHI_EXT}*M_PI /" "$temp_globals" ; 
 
-sed -ie "s/ KAPPA_DIST (double) .*/ KAPPA_DIST (double) ${KAPPA_DIST} /" "$temp_globals" ; 
-sed -ie "s/ PHI_DIST (double) .*/ PHI_DIST (double) ${PHI_DIST}*M_PI /" "$temp_globals" ; 
+# sed -ie "s/ KAPPA_DIST (double) .*/ KAPPA_DIST (double) ${KAPPA_DIST} /" "$temp_globals" ; 
+# sed -ie "s/ PHI_DIST (double) .*/ PHI_DIST (double) ${PHI_DIST}*M_PI /" "$temp_globals" ; 
 
 sed -ie "s/ DURATION .*/ DURATION (double) 14E3 /" "$temp_globals" ; 
-sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 30E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 10E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_WINDOW .*/ TIME_WINDOW (double) 0.2500E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_REC .*/ TIME_REC (double) 14E3 /" "$temp_globals" ; 
-sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 2E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 0E3 /" "$temp_globals" ; 
 
 sed -ie "s/ IF_LIF .*/ IF_LIF ${IF_LIF} /" "$temp_globals" ; 
 sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ; 

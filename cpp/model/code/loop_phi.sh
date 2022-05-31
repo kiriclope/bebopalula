@@ -11,17 +11,19 @@ IF_BIN=0
 IF_STP=1 
 IF_GEN_CON=0 
 
-RANK=1
-IF_GAUSS=1 
-IF_SPEC=0 
+RANK=1 
+IF_GAUSS=0
+IF_RING=1
+
+IF_SPEC=0
 FIX_MAP_SEED=1 
 
 IF_LOW_RANK=0 
-FIX_KSI_SEED=1  
+FIX_KSI_SEED=1 
 
-sed -ie "s/ DURATION .*/ DURATION (double) 60E3 /" "$temp_globals" ; 
+sed -ie "s/ DURATION .*/ DURATION (double) 30E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_INI .*/ TIME_INI (double) 0E3 /" "$temp_globals" ; 
-sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 30E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 10E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_WINDOW .*/ TIME_WINDOW (double) .250E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_REC .*/ TIME_REC (double) 60E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 0E3 /" "$temp_globals" ; 
@@ -32,7 +34,7 @@ sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ;
 sed -ie "s/ IF_STP .*/ IF_STP ${IF_STP} /" "$temp_globals" ; 
 
 sed -ie "s/ IF_TRIALS .*/ IF_TRIALS 1 /" "$temp_globals" ; 
-sed -ie "s/ IF_INI_COND .*/ IF_INI_COND 0 /" "$temp_globals" ; 
+sed -ie "s/ IF_INI_COND .*/ IF_INI_COND 1 /" "$temp_globals" ; 
 
 sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON ${IF_GEN_CON} /" "$temp_globals" ; 
 sed -ie "s/ IF_SAVE_CON_VEC .*/ IF_SAVE_CON_VEC 0 /" "$temp_globals" ; 
@@ -53,30 +55,33 @@ sed -ie "s/ IF_CHRISTOS .*/ IF_CHRISTOS 0 /" "$temp_globals" ;
 
 sed -ie "s/ IF_STEP .*/ IF_STEP 1 /" "$temp_globals" ; 
 
-read n_pop N K dir n_trials <<<  "$1 $2 $3 $4 $5" 
+read n_pop N K dir n_trials n_ini <<<  "$1 $2 $3 $4 $5 $6" 
 
-for trial in $(seq 1 1 $n_trials); do 
+for ini in $(seq 1 1 $n_ini); do 
+    for trial in $(seq 1 1 $n_trials); do 
     
-    echo "#########################################################################" 
-    ./mem_usage.sh 
-    ./cpu_usage.sh 
-    echo "#########################################################################" 
+	echo "#########################################################################" 
+	./mem_usage.sh 
+	./cpu_usage.sh 
+	echo "#########################################################################" 
 
-    dum=$(echo "print(${trial} / ${n_trials})" | python3)
-    sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) $dum /" "$temp_globals" ; 
-    
-    echo "simulation parameters:" 
-    echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial}" 
-    echo "#########################################################################" 
-    
-    sed -ie "s/ TRIAL_ID .*/ TRIAL_ID ${trial} /" "$temp_globals" 
-    
-    echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas" 
-    g++ ${temp_main} -Ofast -s -std=c++11 -o ${temp_out} -lgsl -lblas 
-    # ./${temp_out} $n_pop $N $K $dir 
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial} ./${temp_out} $n_pop $N $K $dir 
-    
-    # sleep 5s 
+	dum=$(echo "print(${trial} / ${n_trials})" | python3)
+	sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) $dum /" "$temp_globals" ; 
+	
+	echo "simulation parameters:" 
+	echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial}" 
+	echo "#########################################################################" 
+	
+	sed -ie "s/ TRIAL_ID .*/ TRIAL_ID ${trial} /" "$temp_globals" 
+	sed -ie "s/ INI_COND_ID .*/ INI_COND_ID ${ini} /" "$temp_globals" 
+	
+	echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas" 
+	g++ ${temp_main} -Ofast -s -std=c++11 -o ${temp_out} -lgsl -lblas 
+	# ./${temp_out} $n_pop $N $K $dir 
+	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial} ./${temp_out} $n_pop $N $K $dir 
+	
+	# sleep 5s 
+    done
 done
 
 rm $temp_files

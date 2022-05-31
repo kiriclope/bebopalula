@@ -9,18 +9,20 @@
 #include <sys/stat.h> 
 #include <gsl/gsl_rng.h> 
 #include <gsl/gsl_randist.h> 
-#include <gsl/gsl_permutation.h> 
+#include <gsl/gsl_permutation.h>
 
 #include "globals.h" 
 #include "mean_field.h" 
 #include "net_utils.h" 
-#include "con_utils.h" 
+#include "con_utils.h"
+#include "rmvnorm.h"
 #include "mat_utils.h" 
 #include "stp_utils.h"
 #include "tasks_utils.h"
 #include "hyst_utils.h" 
 #include "lif_utils.h" 
-#include "binary_utils.h" 
+#include "binary_utils.h"
+
 
 int main(int argc , char** argv) { 
   

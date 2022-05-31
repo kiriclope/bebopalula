@@ -155,15 +155,27 @@ void init_globals() {
     ksi = new double [n_neurons]() ;
     ksi_scaled = new double [n_neurons * n_neurons]() ; 
     
-    gauss = new double [n_neurons]() ; 
+    shared_ksi  = new double [n_neurons]() ; 
     for(j=0; j<n_neurons; j++)
-      gauss[j] = white_noise(covar_ksi_gen) ; 
+      shared_ksi[j] = white_noise(covar_ksi_gen) ; 
+
+    shared_sample  = new double [n_neurons]() ; 
+    for(j=0; j<n_neurons; j++)
+      shared_sample[j] = white_noise(ksi_gen) ; 
+
+    shared_dist  = new double [n_neurons]() ; 
+    for(j=0; j<n_neurons; j++)
+      shared_dist[j] = white_noise(ksi_1_gen) ; 
+    
+    sample = new double [n_neurons]() ; 
+    distractor = new double [n_neurons]() ; 
     
     ksi_init = new double [n_neurons]() ; 
     if(RANK==2) { 
       ksi_1 = new double [n_neurons]() ; 
       ksi_1_scaled = new double [n_neurons * n_neurons]() ; 
     }
+    
   }
   
   if(IF_GAUSS)
@@ -213,6 +225,10 @@ void delete_globals() {
     delete [] ksi ; 
     delete [] ksi_init ;
     delete [] ksi_scaled ;
+
+    delete [] shared_ksi ; 
+    delete [] shared_sample ; 
+    delete [] shared_dist ; 
     
     if(RANK==2) {
       delete [] ksi_1 ;
@@ -474,12 +490,12 @@ void create_dir() {
   if(IF_LOOP_GAIN) 
     path += "/gain_" + str_gain.str() ; 
   
+  if(IF_TRIALS) 
+    path += "/trial_" + to_string( (int) TRIAL_ID ) ;
+  
   if(IF_INI_COND) 
     path += "/ini_cond_" + to_string( (int) INI_COND_ID ) ; 
-  
-  if(IF_TRIALS) 
-    path += "/trial_" + to_string( (int) TRIAL_ID ) ; 
-  
+    
   make_dir(path) ; 
   
   cout << "Created directory : " ; 
