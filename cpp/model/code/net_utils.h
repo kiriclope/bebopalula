@@ -613,7 +613,7 @@ void get_m1_phase() {
       yCord += filter_rates[j] * sin(2.0 * j * dPhi) / TIME_WINDOW ; 
     }
     
-    m1[i_pop] = ( 2.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
+    m1[i_pop] = ( 1.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
     phase[i_pop] = 0.5 * atan2(yCord, xCord) ; 
     
     if(phase[i] < 0)

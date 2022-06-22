@@ -57,7 +57,12 @@ sed -ie "s/ IF_STEP .*/ IF_STEP 1 /" "$temp_globals" ;
 
 read n_pop N K dir n_trials n_ini <<<  "$1 $2 $3 $4 $5 $6" 
 
+sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
+
 for ini in $(seq 1 1 $n_ini); do
+    
+    sed -ie "s/ SEED_CON .*/ SEED_CON (double) ${ini} /" "$temp_globals" ; 
+    
     for trial in $(seq 1 1 $n_trials); do
     
 	echo "#########################################################################" 
@@ -80,7 +85,7 @@ for ini in $(seq 1 1 $n_ini); do
 	# ./${temp_out} $n_pop $N $K $dir 
 	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_ini_${ini} ./${temp_out} $n_pop $N $K $dir 
 	
-	# sleep 5s 
+	sleep 20s 
     done
 done
 

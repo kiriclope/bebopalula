@@ -640,9 +640,9 @@ void func_con_vec() {
   
   con_vec = new int [n_neurons*n_neurons]() ; 
   
-  for(i=0; i<n_neurons; i++) {
-    for(j=0; j<n_neurons; j++) { // Jij -> j (cols, pre) to i (rows, post)
-      if(con_prob[j + i * n_neurons] >= unif(rand_gen) ) { 
+  for(i=0; i<n_neurons; i++) { 
+    for(j=0; j<n_neurons; j++) { // Jij -> j (cols, pre) to i (rows, post) 
+      if(con_prob[j + i * n_neurons] >= unif(con_gen) ) { 
   	con_vec[j + i * n_neurons] = 1 ; 
   	total_n_post++ ; 
       } 

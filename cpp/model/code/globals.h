@@ -4,7 +4,8 @@
 using namespace:: std ; 
 
 random_device rd ; 
-mt19937 rand_gen(rd()) ; 
+mt19937 rand_gen(rd()) ;
+
 uniform_real_distribution<double> unif(0.0, 1.0) ; 
 normal_distribution<double> white_noise(0.0, 1.0) ;  
 
@@ -105,7 +106,7 @@ double *overlaps ;
 #define IF_GEN_CON 0
 #define IF_GEN_KSI 0
 #define IF_SAVE_CON_VEC 0 
-#define IF_SAVE_SPARSE_REP 1 
+#define IF_SAVE_SPARSE_REP 0 
 #define IF_CHECK_SPARSE_REP 0 
 
 #define IF_RING 1
@@ -143,9 +144,12 @@ double *X ;
 #define FIX_KSI_SEED 1 
 #define SEED_KSI (double) 3
 
-default_random_engine ksi_gen (exp(SEED_KSI)) ; 
-default_random_engine ksi_1_gen (sqrt(SEED_KSI)) ; 
-default_random_engine covar_ksi_gen (10.0) ; 
+#define SEED_CON (double) 1 // rd()
+
+mt19937 con_gen(exp(SEED_CON)) ; 
+mt19937 ksi_gen(exp(SEED_KSI)) ; 
+mt19937 ksi_1_gen(sqrt(SEED_KSI)) ; 
+mt19937 covar_ksi_gen(10.0) ; 
 
 #define IF_NORM_KSI 0 
 #define MEAN_KSI (double) 0.0 
