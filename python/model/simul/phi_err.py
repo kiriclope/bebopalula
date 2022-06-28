@@ -2,87 +2,89 @@ import sys, importlib
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-import get_m1
-importlib.reload(sys.modules['get_m1']) 
-
+import scipy.stats as stat 
 from get_m1 import * 
 from utils import * 
 from write import *
 
 importlib.reload(sys.modules['params'])
+importlib.reload(sys.modules['get_m1']) 
 
-
-gv.folder = 'albert_off'
 gv.IF_INI_COND = 0
 gv.IF_TRIALS = 0
+
+gv.N_TRIALS = 10 
 gv.init_param()
 
 path = gv.path
 
 def get_diffusion(path):
     phi_trial = []
-    for i_trial in range(1,26):
+    for i_trial in range(1, gv.N_TRIALS + 1):
     
         phi_ini = []
-        for i_ini in range(1,11):
+        for i_ini in range(1, 1 + 1):
             gv.path = path
             gv.path += '/trial_%d' % i_trial ; 
             gv.path += '/ini_cond_%d' % i_ini ; 
             print(gv.path)
-        
-            time, rates = get_time_rates(path=gv.path) 
-            phi = get_phi(rates) 
-            # phi_ini.append( phi[0] - (1.0 - i_trial/10) * np.pi ) 
-            phi_trial.append( phi[0] - (1.0 - i_trial/25) * np.pi ) 
-        
-        # phi_trial.append(phi_ini)
-        
-    phi_trial = np.asarray(phi_trial) 
-    # print('phi', phi_trial.shape) 
+            try:
+                time, rates = get_time_rates(path=gv.path) 
+                _, phi = decode_bump(rates[:,0]) 
+                # phi_ini.append( phi[0] - (1.0 - i_trial/gv.N_TRIALS) * np.pi )                
+                # Dphi = ( phi - (1-i_trial/gv.N_TRIALS) * np.pi ) # remember 1st
+                Dphi = ( phi - (i_trial/gv.N_TRIALS) * np.pi ) # remember 2nd
+                
+                phi_ini.append(Dphi) 
+                print('phi', phi[10] * 180 / np.pi,
+                      'phi_ext', (1-i_trial/gv.N_TRIALS)*180,
+                      'Dphi', Dphi[10] * 180 / np.pi) 
+            except:
+                phi_ini.append(np.nan*np.zeros(40)) 
+                print('error') 
+                pass
+            
+        phi_trial.append(phi_ini)
     
-    phi_trial = np.mean(phi_trial[..., -8:], axis=-1) # average over time 
+    phi_trial = np.asarray(phi_trial) 
     # print('phi', phi_trial.shape) 
     
     return phi_trial * 180 / np.pi 
 
-# phi_stim = np.arange(1,11)/10 * 180 
+Dphi_off = get_diffusion(path)
 
-phi_off = get_diffusion(path)
-# diff_off = np.mean(phi_off, axis=-1) # average over initial conditions 
-diff_off = phi_off # average over initial conditions 
-diff_off[diff_off>90] -= 180 
-diff_off[diff_off<-90] += 180 
+Dphi_off[Dphi_off>90] -= 180 
+Dphi_off[Dphi_off<-90] += 180 
 
-print('diff_off', diff_off.shape) 
-print(diff_off)
+drift_off = stat.circmean(Dphi_off[..., 24:28], high=90, low=-90, axis=-1, nan_policy='omit') # over time
+drift_off_avg = np.nanmean(drift_off, axis=-1) # over realisations
 
-mean_off = np.mean( diff_off, axis=-1) # average over trials 
-std_off = np.std( diff_off, axis=-1)
+# figname = gv.folder + 'off_on_' + 'drift_hist'
+figname = 'off_on_' + 'drift_hist'
+plt.figure(figname)
 
-print('mean_off', mean_off, 'std_off', std_off) 
+trials = np.arange(1, 11)
+distance = np.sqrt( np.abs( ( (1.0-trials/10 )*180 )**2 - (trials/10 * 180)**2 ) ) 
 
-plt.hist(diff_off, histtype='step', color='b') 
-plt.xlabel('Error (deg)') 
+print(distance.shape, drift_off_avg.shape) 
+plt.plot(distance, 2*drift_off_avg, color='b')
 
-# path = path.replace('off', 'off_2') # change dirname 
+plt.ylabel('Angular Deviation (deg)') 
+plt.xlabel('Distance')
+
 path = path.replace('off', 'on') # change dirname 
 
-phi_on = get_diffusion(path) 
-# diff_on = np.mean(phi_on, axis=-1) # average over initial conditions 
-diff_on = phi_on # average over initial conditions 
-diff_on[diff_on>90] -= 180 
-diff_on[diff_on<-90] += 180 
-print('diff_on', diff_on.shape) 
-print(diff_on) 
+Dphi_on = get_diffusion(path) 
 
-mean_on = np.mean( diff_on, axis=-1) # average over trials 
-std_on = np.std( diff_on, axis=-1) 
+Dphi_on[Dphi_on>90] -= 180 
+Dphi_on[Dphi_on<-90] += 180 
 
-print('mean_on', mean_on, 'std_on', std_on) 
+drift_on = stat.circmean(Dphi_on[..., 24:28], high=90, low=-90, axis=-1, nan_policy='omit') # over time
+drift_on_avg = np.nanmean(drift_on, axis=-1) # over realisations
 
-plt.hist(diff_on, histtype='step', color='r') 
-plt.xlabel('Error (deg)') 
+plt.plot(distance, 2*drift_on_avg, color='r')
 
-# plt.boxplot([diff_off, diff_on], patch_artist=True, labels=['off', 'on'], showfliers=False, notch=True)
+plt.savefig(figname + '.svg', dpi=300)
+
+# plt.boxplot([drift_off, drift_on], patch_artist=True, labels=['off', 'on'], showfliers=False, notch=True)
 # plt.ylabel('Error (deg)')

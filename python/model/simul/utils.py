@@ -31,8 +31,8 @@ def add_vlines():
     
     plt.axvspan(gv.T_SAMPLE_ON, gv.T_SAMPLE_OFF, alpha=0.1, color='b') 
     plt.axvspan(gv.T_DIST_ON, gv.T_DIST_OFF, alpha=0.1, color='b') 
-    plt.axvspan(gv.T_TEST_ON, gv.T_TEST_OFF, alpha=0.1, color='b') 
-    plt.axvspan(gv.T_CUE_ON, gv.T_CUE_OFF, alpha=0.1, color='g') 
+    # plt.axvspan(gv.T_TEST_ON, gv.T_TEST_OFF, alpha=0.1, color='b') 
+    # plt.axvspan(gv.T_CUE_ON, gv.T_CUE_OFF, alpha=0.1, color='g') 
 
 def add_vlines_axis(axis):
     

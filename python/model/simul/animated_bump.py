@@ -25,9 +25,7 @@ alpha = [1, 0.1]
     
 if(gv.MAP==0): 
     time, rates = get_time_rates(path=gv.path, con_path=gv.con_path) 
-    m1, phi, smooth_rates, m1_osc = get_m1_phi_smooth_rates(rates,osc=1) 
-
-# print(m1_osc)
+    m1, phi, smooth_rates = get_m1_phi_smooth_rates(rates) 
 
 if(gv.MAP==1): 
     time, rates_perm =  get_time_rates(MAP=1, path=gv.path, con_path=gv.con_path) 
@@ -72,7 +70,7 @@ else:
     
 fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(1.25*1.618*1.5*3, 1.618*1.5), num=figname) 
 
-fig.suptitle(figtitle) 
+# fig.suptitle(figtitle) 
 ax1.set(xlim=(0, np.pi), ylim=(0, np.ceil( np.nanmax(smooth_rates)*1.2 ) ) )
 # ax1.set(xlim=(0, np.pi), ylim=(0, 20 ) )
 

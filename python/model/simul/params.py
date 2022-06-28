@@ -14,7 +14,7 @@ n_pop = 2
 n_neurons = 4
 K = 2000
 # folder='shrisha'
-folder = 'on_2'
+folder = 'albert_off'
 # folder = 'christos_Ie_840.00_Jee_800.00' # bifurcation for N4K2 n_frac 0.8 no STP
 # folder = 'christos_on' # bifurcation for N4K2 n_frac 0.8 no STP 
 m0 = .001 
@@ -72,36 +72,38 @@ TAU_REC = 200
 USE = .03 
 
 global IF_TRIALS, TRIAL_ID 
-IF_TRIALS = 0 
-TRIAL_ID = 10 
+IF_TRIALS = 1
+TRIAL_ID = 3
 N_TRIALS = 10
 
 global IF_INI_COND, INI_COND_ID 
 IF_INI_COND = 0 
-INI_COND_ID = 6 
+INI_COND_ID = 4 
 
 global IF_HYSTERESIS, HYST_JEE, HYST_M0 
 IF_HYSTERESIS = 0 
 HYST_JEE = -1 
 HYST_M0 = 0 
 
-global IF_DPA, IF_DUAL, IF_ODR, IF_DRT 
+global IF_DPA, IF_DUAL, IF_ODR, IF_DRT, IF_CHRISTOS
 IF_DPA = 0
 IF_DUAL = 0
 IF_DRT = 0
 IF_ODR = 0 
+IF_CHRISTOS  = 1
 
-global KAPPA_EXT, PHI_EXT 
+global KAPPA_EXT, PHI_EXT, PHI_DIST
 KAPPA_EXT = 1.0 
 PHI_EXT = 0.25 
+PHI_DIST = 1-PHI_EXT 
 
 global T_SAMPLE_ON, T_SAMPLE_OFF
 T_SAMPLE_ON = 2
 T_SAMPLE_OFF = 3
 
 global T_DIST_ON, T_DIST_OFF
-T_DIST_ON = 4.5
-T_DIST_OFF = 5.5
+T_DIST_ON = 5# 4.5
+T_DIST_OFF = 6# 5.5
 
 global T_TEST_ON, T_TEST_OFF
 T_TEST_ON = 9
@@ -123,13 +125,15 @@ Tsyn = []
 JEE = 0
 JEE2 = 0 
 
-global pal 
-pal = ['r', 'b']
-# pal = [sns.color_palette('colorblind')[2],
-#        sns.color_palette('colorblind')[0],
-#        sns.color_palette('colorblind')[1],
-#        sns.color_palette('colorblind')[3]
-#        ] 
+global pal
+if folder.find('on')!=-1:
+    pal = ['r', 'b']
+else:
+    pal = [sns.color_palette('colorblind')[2],
+           sns.color_palette('colorblind')[0],
+           sns.color_palette('colorblind')[1],
+           sns.color_palette('colorblind')[3]
+    ] 
 
 global label
 label = ['E', 'I'] 
@@ -172,7 +176,7 @@ def init_param():
     global TRIAL_ID, INI_COND_ID , HYST_JEE, IF_HYSTERESIS, HYST_M0, IF_INI_COND , JEE, JEE2, ksi_path, con_path
     
     if(n_pop!=1): 
-        file_name = "/homecentral/alexandre.mahrach/IDIBAPS/cpp/model/parameters/%dpop/%s.txt" % (n_pop, folder) 
+        file_name = "../../../cpp/model/parameters/%dpop/%s.txt" % (n_pop, folder) 
         print("reading parameters from:", file_name) 
         
         i=0 
@@ -202,9 +206,9 @@ def init_param():
         J2 = J0*J0
         Tsyn = 2 ;
     
-    path = '/homecentral/alexandre.mahrach/IDIBAPS/cpp/model/simulations/%s/%dpop/%s' % (model, n_pop, folder) 
-    fig_path = '/homecentral/alexandre.mahrach/IDIBAPS/python/model/simul/figures/%s/%dpop/%s' % (model, n_pop, folder) 
-    con_path = '/homecentral/alexandre.mahrach/IDIBAPS/connectivity/%dpop' % n_pop 
+    path = '../../../cpp/model/simulations/%s/%dpop/%s' % (model, n_pop, folder) 
+    fig_path = '../../../python/model/simul/figures/%s/%dpop/%s' % (model, n_pop, folder) 
+    con_path = '../../../cpp/model/connectivity/%dpop' % n_pop 
     
     if(K!=np.inf):
         
@@ -288,6 +292,9 @@ def init_param():
     elif(IF_ODR) :
         path += '/ODR'
         fig_path += '/ODR'
+    elif(IF_CHRISTOS):
+        path += '/christos/phi_ext_%.3f_phi_dist_%.3f' % (PHI_EXT, PHI_DIST) 
+        fig_path += '/christos/phi_ext_%.3f_phi_dist_%.3f' % (PHI_EXT, PHI_DIST) 
     
     if(IF_HYSTERESIS):
         fig_path += '/hysteresis'; 
@@ -318,4 +325,3 @@ def init_param():
     
     if not os.path.isdir(fig_path):
         os.makedirs(fig_path)
-
