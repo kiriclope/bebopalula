@@ -132,7 +132,7 @@ void scale_ext_inputs() {
   cout << "sqrt(K) " << sqrt_K << endl ; 
   cout << "Scaling ext_inputs ... " << endl ;  
   for(i=0;i<n_pop;i++) { // postsynaptic
-    ext_inputs_scaled[i] = GAIN * ext_inputs[i] * sqrt_Ka[0] * m0 ; 
+    ext_inputs_scaled[i] = ext_inputs[i] * sqrt_Ka[0] * m0 ; 
     if(IF_RESCALE) ext_inputs_scaled[i] *= (Vth-Vr) ; 
     cout << "raw " << ext_inputs[i] << " scaled " << ext_inputs_scaled[i] << " " ; 
   } 

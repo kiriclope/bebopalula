@@ -29,10 +29,10 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 #define TIME_INI (double) 0.000E3 // 1.00E3 // 10.E3 // 
 #define TIME_STEADY (double) 10.000E3 //  2.0E3 // 10.E3 //
 
-#define DURATION (double) 10.00E3 // 10.E3 // 
+#define DURATION (double) 30.00E3 // 10.E3 // 
 
 #define TIME_WINDOW (double) 0.2500E3 // 1.00E3 // 10.E3 // 
-#define TIME_REC (double) 30.00E3 // 1.00E3 // 10.E3 // 
+#define TIME_REC (double) 60.00E3 // 1.00E3 // 10.E3 // 
 #define TIME_REC_SPIKES (double) 10.00E3 // 1.00E3 // 10.E3 // 
 
 #define IF_RK2 0 
@@ -128,7 +128,7 @@ const double kappas[2] = {KAPPA, KAPPA*.5} ;
 #define DEG_TO_RAD (double) M_PI/180.0 
 const double SIGMA[4] = {60.0, 60.0, 70.0, 60.0} ; 
 
-#define SIGMA_FF 50.0 
+#define SIGMA_FF 100.0 
 
 double *X ; 
 
@@ -232,7 +232,7 @@ const double A_STEP[2] = {1.55, 1.25} ;
 #define T_ERASE_ON (double) 600000
 #define T_ERASE_OFF (double) 700000 
 
-const double A_CUE[2] = {.25, 0.0} ; // {2.4, 1.0} 
+const double A_CUE[2] = {0.25, 0.0} ; // {2.4, 1.0} 
 const double EPS_CUE[2] =  {0.17, 0.0} ; // {.17 , 0.0} 
 
 const double A_ERASE[2] = {5.2, 3.7} ; 
@@ -297,8 +297,8 @@ const double EXP_DT_TAU_MEM[2] = { exp(-DT/TAU_MEM[0]) , exp(-DT/TAU_MEM[1]) } ;
 const double TAU_SYN[4] = {3.0, 2.0, 3.0, 2.0} ; 
 const double EXP_DT_TAU_SYN[4] = { exp(-DT/TAU_SYN[0]) , exp(-DT/TAU_SYN[1]), exp(-DT/TAU_SYN[2]), exp(-DT/TAU_SYN[3])} ; 
 
-#define IF_NMDA 1 
-const double TAU_NMDA[4] = {50.0, 40.0, 50.0, 40.0} ; 
+#define IF_NMDA 1
+const double TAU_NMDA[4] = {40.0, 20.0, 40.0, 20.0} ; 
 const double EXP_DT_TAU_NMDA[4] = { exp(-DT/TAU_NMDA[0]) , exp(-DT/TAU_NMDA[1]), exp(-DT/TAU_NMDA[2]), exp(-DT/TAU_NMDA[3])} ; 
 const double R_NMDA[2] = {1.0, 9.0} ; 
 
