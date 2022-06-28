@@ -51,41 +51,53 @@ sed -ie "s/ FIX_KSI_SEED .*/ FIX_KSI_SEED ${FIX_KSI_SEED} /" "$temp_globals" ;
 sed -ie "s/ IF_HYSTERESIS .*/ IF_HYSTERESIS 0 /" "$temp_globals" ; 
 sed -ie "s/ IF_DPA .*/ IF_DPA 0 /" "$temp_globals" ; 
 sed -ie "s/ IF_DUAL .*/ IF_DUAL 0 /" "$temp_globals" ; 
-sed -ie "s/ IF_CHRISTOS .*/ IF_CHRISTOS 0 /" "$temp_globals" ; 
 
-sed -ie "s/ IF_STEP .*/ IF_STEP 1 /" "$temp_globals" ; 
+sed -ie "s/ IF_CHRISTOS .*/ IF_CHRISTOS 1 /" "$temp_globals" ; 
+sed -ie "s/ IF_STEP .*/ IF_STEP 0 /" "$temp_globals" ; 
 
 read n_pop N K dir n_trials n_ini <<<  "$1 $2 $3 $4 $5 $6" 
 
-sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
+for ini in $(seq 1 1 $n_ini); do 
 
-for ini in $(seq 1 1 $n_ini); do
-    
     sed -ie "s/ SEED_CON .*/ SEED_CON (double) ${ini} /" "$temp_globals" ; 
+    sed -ie "s/ INI_COND_ID .*/ INI_COND_ID ${ini} /" "$temp_globals" 
+    
+    sed -ie "s/ IF_LIF .*/ IF_LIF 0 /" "$temp_globals" ; 
+    sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
+    sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" "$temp_globals" ; 
+    
+    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o mat_${ini}.out -lgsl -lgslcblas 
+    srun --priority="TOP" ./mat_${ini}.out $n_pop $N $K $dir 
+    
+    sed -ie "s/ IF_LIF .*/ IF_LIF 1 /" "$temp_globals" ; 
+    sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 0 /" "$temp_globals" ; 
+    sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ; 
     
     for trial in $(seq 1 1 $n_trials); do
-    
+	
 	echo "#########################################################################" 
 	./mem_usage.sh 
-	./cpu_usage.sh 
+	# ./cpu_usage.sh 
 	echo "#########################################################################" 
 	
 	dum=$(echo "print(${trial} / ${n_trials})" | python3)
 	sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) $dum /" "$temp_globals" ; 
+	sed -ie "s/ PHI_DIST (double) .*/ PHI_DIST (double) 1.0 - $dum /" "$temp_globals" ; 
 	
 	echo "simulation parameters:" 
 	echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial} phi ${dum} ini ${ini}" 
 	echo "#########################################################################" 
 	
 	sed -ie "s/ TRIAL_ID .*/ TRIAL_ID ${trial} /" "$temp_globals" 
-	sed -ie "s/ INI_COND_ID .*/ INI_COND_ID ${ini} /" "$temp_globals" 
 	
-	echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas" 
-	g++ ${temp_main} -Ofast -s -std=c++11 -o ${temp_out} -lgsl -lblas 
+	echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas"
+	g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${ini}_${trial}.out -lgsl -lgslcblas 
+	# g++ ${temp_main} -Ofast -s -std=c++11 -o ${temp_out} -lgsl -lblas 
 	# ./${temp_out} $n_pop $N $K $dir 
-	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_ini_${ini} ./${temp_out} $n_pop $N $K $dir 
+	# screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_ini_${ini} ./${temp_out}_${trial}_${ini}.out $n_pop $N $K $dir 
+	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_ini_${ini}_off srun --priority="TOP" ./${temp_out}_${ini}_${trial}.out $n_pop $N $K albert_off 
+	screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_ini_${ini}_on srun --priority="TOP" ./${temp_out}_${ini}_${trial}.out $n_pop $N $K albert_on
 	
-	sleep 20s 
     done
 done
 

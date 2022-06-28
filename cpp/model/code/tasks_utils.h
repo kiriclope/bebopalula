@@ -30,12 +30,12 @@ void track_input() {
   
 }
 
-void christos_tasks() { 
+void christos_task() { 
   // CUE 
   if(t_time-TIME_STEADY >= T_CUE_ON && t_time-TIME_STEADY < T_CUE_OFF  && !SWITCH_ON) {
     for(i=0;i<n_neurons; i++) 
       ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
-	+ sqrt_Ka[0] * A_CUE[which_pop[i]]
+	+ sqrt_Ka[0] * A_CUE[which_pop[i]] 
 	* ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT * M_PI) ) ; 
     SWITCH_ON = 1 ; 
   }
@@ -46,11 +46,18 @@ void christos_tasks() {
   } 
   
   // ERASE BUMP 
-  if(t_time-TIME_STEADY >= T_ERASE_ON && t_time-TIME_STEADY < T_ERASE_OFF  && !SWITCH_OFF) { 
-    for(i=0;i<n_neurons; i++) 
-      ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
-	+ sqrt_Ka[0] * A_ERASE[which_pop[i]]
-	* (1.0 + EPS_ERASE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT * M_PI)) ; 
+  if(t_time-TIME_STEADY >= T_ERASE_ON && t_time-TIME_STEADY < T_ERASE_OFF  && !SWITCH_OFF) {
+    if(IF_DIST)
+      for(i=0;i<n_neurons; i++) 
+	ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	  + A_ERASE[which_pop[i]] 
+	  * (1.0 + EPS_ERASE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_ERASE * M_PI)) ;
+    else
+      for(i=0;i<n_neurons; i++) 
+	ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	  + sqrt_Ka[0] * A_ERASE[which_pop[i]] 
+	  * (1.0 + EPS_ERASE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_ERASE * M_PI)) ;
+    
     SWITCH_OFF = 1 ; 
   }
   if(t_time-TIME_STEADY >= T_ERASE_OFF && SWITCH_OFF) { 
@@ -156,6 +163,40 @@ void DRT_task() {
   
 } 
 
+void christos_dist() {
+  
+  if(t_time-TIME_STEADY >= T_STEP_ON && t_time-TIME_STEADY < T_STEP_OFF  && !SWITCH_ON) {
+    for(i=0;i<n_neurons; i++) 
+      ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	+ sqrt_Ka[0] * A_CUE[which_pop[i]] 
+	* ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT * M_PI) ) ; 
+    
+    SWITCH_ON = 1 ; 
+  }
+  
+  if(t_time-TIME_STEADY >= T_STEP_OFF && SWITCH_ON) { 
+    for(i=0;i<n_neurons; i++) 
+      ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; 
+    SWITCH_ON = 0 ; 
+  } 
+
+  if(t_time-TIME_STEADY >= T_DIST_ON && t_time-TIME_STEADY < T_DIST_OFF  && !SWITCH_ON) {
+    for(i=0;i<n_neurons; i++) 
+      ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
+	+ sqrt_Ka[0] * A_CUE[which_pop[i]] 
+	* ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_DIST * M_PI) ) ; 
+    
+    SWITCH_ON = 1 ; 
+  }
+  
+  if(t_time-TIME_STEADY >= T_DIST_OFF && SWITCH_ON) { 
+    for(i=0;i<n_neurons; i++) 
+      ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; 
+    SWITCH_ON = 0 ; 
+  } 
+  
+}
+
 void step_input() {
   double kappa_ext = KAPPA_EXT / sqrt_K ; 
   
@@ -201,7 +242,7 @@ void tasks_inputs() {
     step_input() ;
   
   if(IF_CHRISTOS)
-    christos_tasks() ;
+    christos_task() ;
     
   if(IF_DPA || IF_DUAL) 
     DPA_task() ; 

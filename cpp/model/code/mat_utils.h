@@ -253,7 +253,7 @@ void gen_con_sparse_vec() {
   /*     write_to_file(ksi_path, "ksi_1", ksi_1 , n_neurons) ;  */
   /* } */
   
-  if(IF_SAVE_SPARSE_REP && !IF_TRIALS) 
+  if(IF_SAVE_SPARSE_REP) 
     save_to_con_file() ; 
   
 }

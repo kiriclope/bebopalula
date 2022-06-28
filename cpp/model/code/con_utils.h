@@ -763,7 +763,6 @@ void check_sparse_rep() {
 
 void create_con_dir() { 
   
-  con_path = "/homecentral/alexandre.mahrach/IDIBAPS/connectivity/" ; 
   con_path += to_string(n_pop)+"pop"; 
   
   if(n_pop==1)

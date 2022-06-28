@@ -357,11 +357,11 @@ double threshold_linear(double x) {
 
 double cut_LR(double x) {
   if(x>1.0)
-    return 1.0 ;
+    x = 1.0 ;
   if(x<0.0)
-    return 0 ; 
-  if(x>=0)
-    return x ; 
+    x = 0 ;
+  
+  return x ; 
 }
 
 void create_dir() { 
@@ -448,9 +448,10 @@ void create_dir() {
       path += "/gauss/EE_" + str_EE.str() + "_EI_" + str_EI.str() +"_IE_" + str_IE.str() + "_II_" + str_II.str() ;     
   } 
   
-  ostringstream str_kappa_ext, str_phi_ext ; 
+  ostringstream str_kappa_ext, str_phi_ext, str_phi_dist ; 
   str_kappa_ext << fixed << setprecision(2) << KAPPA_EXT ; 
-  str_phi_ext << fixed << setprecision(2) << PHI_EXT ; 
+  str_phi_ext << fixed << setprecision(3) << PHI_EXT ; 
+  str_phi_dist << fixed << setprecision(3) << PHI_ERASE ; 
   
   if(IF_DPA) 
     path += "/DPA/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ; 
@@ -458,7 +459,9 @@ void create_dir() {
     path += "/dual_task/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ; 
   if(IF_DRT) 
     path += "/DRT/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ; 
-  
+  if(IF_CHRISTOS)
+    path += "/christos/phi_ext_" + str_phi_ext.str() + "_phi_dist_" + str_phi_dist.str() ;
+    
   if(IF_HYSTERESIS) {
     if(HYST_J_EE==1) 
       path += "/hysteresis/Jee_up"; 
@@ -486,7 +489,7 @@ void create_dir() {
   
   if(IF_INI_COND) 
     path += "/ini_cond_" + to_string( (int) INI_COND_ID ) ; 
-    
+  
   make_dir(path) ; 
   
   cout << "Created directory : " ; 
@@ -609,11 +612,11 @@ void get_m1_phase() {
     yCord = 0 ; 
     
     for(unsigned long j=cum_n_per_pop[i_pop]; j < cum_n_per_pop[i_pop+1]; j++) {
-      xCord += filter_rates[j] * cos(2.0 * j * dPhi) / TIME_WINDOW ; 
-      yCord += filter_rates[j] * sin(2.0 * j * dPhi) / TIME_WINDOW ; 
+      xCord += filter_rates[j] * cos(2.0 * j * dPhi) * DT / TIME_WINDOW ; 
+      yCord += filter_rates[j] * sin(2.0 * j * dPhi) * DT / TIME_WINDOW ; 
     }
     
-    m1[i_pop] = ( 1.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
+    m1[i_pop] = ( 2.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
     phase[i_pop] = 0.5 * atan2(yCord, xCord) ; 
     
     if(phase[i] < 0)

@@ -327,15 +327,19 @@ void update_postsyn_currents_nmda() {
 
 void update_net_inputs() {   
   // cout << "reseting net inputs" << endl ;
-  if(SIGMA_FF>0)
-    for(i=0;i<n_neurons;i++) {
-      net_inputs[i] = ff_inputs[i] + sqrt(SIGMA_FF) * white_noise(rand_gen) ; 
-      /* release_stp() ;  */
-    } 
-  else 
-    for(i=0;i<n_neurons;i++) 
-      net_inputs[i] = ff_inputs[i] ; 
+  for(i=0;i<n_neurons;i++) 
+    net_inputs[i] = ff_inputs[i] ;
   
+  if(SIGMA_FF>0)
+    for(i=0;i<n_neurons;i++) 
+      net_inputs[i] += sqrt(ext_inputs_scaled[which_pop[i]] * SIGMA_FF / sqrt_Ka[which_pop[i]]) * white_noise(rand_gen) ; 
+  
+  /* if(IF_POISSON_FF) { */
+  /*   net_inputs[i] = 0.0 ;  */
+  /*   if(unif(rand_gen) < ext_inputs_scaled[i]*DT)  */
+  /*     net_inputs[i] += 1.0 ;  */
+  /* }  */
+    
   if(IF_RK2) 
     for(i=0;i<n_neurons;i++) 
       net_inputs_RK2[i] = ff_inputs[i] ; 

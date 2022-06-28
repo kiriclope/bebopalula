@@ -57,7 +57,7 @@ const double Trate[2] = {10.0, 10.0} ;
 #define Tsyn0 1.0 // for one population 
 
 #define GAIN (double) 1.0 
-#define M0 (double) 0.001
+#define M0 (double) 0.0015
 
 // 0.05 if with 0.01 without stp 
 #define IF_LOOP_M0 0 
@@ -106,7 +106,7 @@ double *overlaps ;
 #define IF_GEN_CON 0
 #define IF_GEN_KSI 0
 #define IF_SAVE_CON_VEC 0 
-#define IF_SAVE_SPARSE_REP 0 
+#define IF_SAVE_SPARSE_REP 1
 #define IF_CHECK_SPARSE_REP 0 
 
 #define IF_RING 1
@@ -128,7 +128,8 @@ const double kappas[2] = {KAPPA, KAPPA*.5} ;
 #define DEG_TO_RAD (double) M_PI/180.0 
 const double SIGMA[4] = {60.0, 60.0, 70.0, 60.0} ; 
 
-#define SIGMA_FF 50.0 
+#define SIGMA_FF 1.0 
+#define IF_POISSON_FF 0
 
 double *X ; 
 
@@ -176,7 +177,7 @@ double *sample, *distractor ;
 
 #define IF_SAMPLE 0
 
-string con_path ; 
+string con_path = "../connectivity/" ; 
 string ksi_path ; 
 
 int *n_post, *avg_n_post, *con_vec, **n_pre, *avg_n_pre ; 
@@ -209,14 +210,14 @@ int SWITCH_OFF = 0 ;
 #define PHI_EXT (double) 0.25 
 
 #define KAPPA_DIST (double) 0.5
-#define PHI_DIST (double) M_PI 
+#define PHI_DIST (double) 0.75
 
 #define KAPPA_CUE (double) 0.25 
 #define KAPPA_TEST (double) 2.0
 
 #define IF_TUNED_FF 0
 
-#define IF_STEP 1
+#define IF_STEP 0
 #define T_STEP_ON (double) 2000.0
 #define T_STEP_OFF (double) 3000.0
 const double A_STEP[2] = {1.55, 1.25} ; 
@@ -225,18 +226,21 @@ const double A_STEP[2] = {1.55, 1.25} ;
 // Christos
 //////////////////////////////////////
 
-#define IF_CHRISTOS 0
+#define IF_CHRISTOS 1
 #define T_CUE_ON (double) 2000 
 #define T_CUE_OFF (double) 3000 
 
-#define T_ERASE_ON (double) 600000
-#define T_ERASE_OFF (double) 700000 
+#define T_ERASE_ON (double) 5000
+#define T_ERASE_OFF (double) 6000 
 
 const double A_CUE[2] = {.25, 0.0} ; // {2.4, 1.0} 
-const double EPS_CUE[2] =  {0.17, 0.0} ; // {.17 , 0.0} 
+const double EPS_CUE[2] =  {0.3, 0.0} ; // {.17 , 0.0} 
 
-const double A_ERASE[2] = {5.2, 3.7} ; 
-const double EPS_ERASE[2] = {0.23, 0.28} ; 
+#define IF_DIST 0
+const double A_ERASE[2] = {.25, 0.0} ; 
+const double EPS_ERASE[2] = {0.3, 0.0} ; 
+
+#define PHI_ERASE (double) .75 
 
 //////////////////////////////////////
 // DUAL TASK
@@ -249,8 +253,8 @@ const double EPS_ERASE[2] = {0.23, 0.28} ;
 #define T_SAMPLE_ON (double) 2000 
 #define T_SAMPLE_OFF (double) 3000 
 
-#define T_DIST_ON (double) 4500 
-#define T_DIST_OFF (double) 5500 
+#define T_DIST_ON (double) 4000 //4500 
+#define T_DIST_OFF (double) 5000 // 5500 
 
 #define T_RWD_ON (double) 6500 
 #define T_RWD_OFF (double) 7500 

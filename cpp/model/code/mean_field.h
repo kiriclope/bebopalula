@@ -2,8 +2,9 @@
 #define __MFRATES__
 
 #include <iostream>
-#include <eigen3/Eigen/Dense>
+// #include <eigen3/Eigen/Dense>
 /* #include <eigen3/unsupported/Eigen/NonLinearOptimization> */
+#include "/home/leon/IDIBAPS/cpp/libs/eigen/eigen-3.4.0/unsupported/Eigen/NonLinearOptimization"
 
 using namespace Eigen ;
 

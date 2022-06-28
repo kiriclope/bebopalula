@@ -1,36 +1,106 @@
-#!/usr/bin/env bash
-LANG=en_US
-export LANG
+#!/usr/bin/env bash 
 
-read n_pop N K dir<<<  "$1 $2 $3 $4" 
+temp_files=$(./bash_utils.sh)
+temp_globals=$(echo $temp_files | awk 'NR==1{print $1}') 
+temp_main=$(echo $temp_files | awk 'NR==1{print $2}') 
+temp_out=$(echo $temp_files | awk 'NR==1{print $3}') 
 
-J0=1.0
-J1=0.0
-sig1=1.0
+IF_LIF=1 
+IF_BIN=0 
 
-sed -ie "s/J0 .*/J0 -${J0}/" globals.h 
-sed -ie "s/MEAN_XI .*/MEAN_XI ${J1}/" globals.h 
-sed -ie "s/VAR_XI .*/VAR_XI ${sig1}/" globals.h 
+IF_STP=1 
+IF_GEN_CON=0 
 
-sed -ie "s/IF_TRIALS .*/IF_TRIALS 1/" globals.h 
+RANK=1 
+IF_GAUSS=0
+IF_RING=1
 
-sed -ie "s/FIXED_XI .*/FIXED_XI 1/" globals.h 
+IF_SPEC=0
+FIX_MAP_SEED=1 
 
-for trial in $(seq 0 1 9); do 
+IF_LOW_RANK=0 
+FIX_KSI_SEED=1 
 
-    sed -ie "s/TRIAL_ID .*/TRIAL_ID ${trial}/" globals.h 
+sed -ie "s/ DURATION .*/ DURATION (double) 10E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_INI .*/ TIME_INI (double) 0E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 10E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_WINDOW .*/ TIME_WINDOW (double) .250E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_REC .*/ TIME_REC (double) 60E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 0E3 /" "$temp_globals" ; 
 
-    echo "#########################################################################"
-    echo "trial ${trial}"
-    echo "#########################################################################"
+sed -ie "s/ IF_LIF .*/ IF_LIF ${IF_LIF} /" "$temp_globals" ; 
+sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ; 
 
-    echo "generating connectivity matrix ..."
-    (cd ../../../cuda/connectivity/; make -B &>/dev/null)
-    (cd ../../../cuda/connectivity/; ./a.out &>/dev/null)
+sed -ie "s/ IF_STP .*/ IF_STP ${IF_STP} /" "$temp_globals" ; 
+
+sed -ie "s/ IF_TRIALS .*/ IF_TRIALS 1 /" "$temp_globals" ; 
+sed -ie "s/ IF_INI_COND .*/ IF_INI_COND 0 /" "$temp_globals" ; 
+
+sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON ${IF_GEN_CON} /" "$temp_globals" ; 
+sed -ie "s/ IF_SAVE_CON_VEC .*/ IF_SAVE_CON_VEC 0 /" "$temp_globals" ; 
+sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ; 
+
+sed -ie "s/ RANK .*/ RANK ${RANK} /" "$temp_globals" ; 
+
+sed -ie "s/ IF_SPEC .*/ IF_SPEC ${IF_SPEC} /" "$temp_globals" ; 
+sed -ie "s/ FIX_MAP_SEED .*/ FIX_MAP_SEED ${FIX_MAP_SEED} /" "$temp_globals" ; 
+
+sed -ie "s/ IF_LOW_RANK .*/ IF_LOW_RANK ${IF_LOW_RANK} /" "$temp_globals" ; 
+sed -ie "s/ FIX_KSI_SEED .*/ FIX_KSI_SEED ${FIX_KSI_SEED} /" "$temp_globals" ; 
+
+sed -ie "s/ IF_HYSTERESIS .*/ IF_HYSTERESIS 0 /" "$temp_globals" ; 
+sed -ie "s/ IF_DPA .*/ IF_DPA 0 /" "$temp_globals" ; 
+sed -ie "s/ IF_DUAL .*/ IF_DUAL 0 /" "$temp_globals" ; 
+
+sed -ie "s/ IF_CHRISTOS .*/ IF_CHRISTOS 1 /" "$temp_globals" ; 
+sed -ie "s/ IF_STEP .*/ IF_STEP 0 /" "$temp_globals" ; 
+
+read n_pop N K dir n_trials <<<  "$1 $2 $3 $4 $5" 
+
+for trial in $(seq 1 1 $n_trials); do
     
-    echo "compiling ..."
-    g++ main.cpp -std=c++11 -Ofast -s -o loop_trials.out
+    echo "#########################################################################" 
+    ./mem_usage.sh 
+    # ./cpu_usage.sh 
+    echo "#########################################################################" 
     
-    screen -dmS N${N}_K${K}_J0${i}_MEAN_XI_${J1}_VAR_XI_${sig1}_TRIAL_${trial} ./loop_trials.out $n_pop $N $K $dir
-    echo "running J0_${i}_MEAN_XI_${J1}_VAR_XI_${sig1}_trial_${trial} "
+    sed -ie "s/ SEED_CON .*/ SEED_CON (double) ${trial} /" "$temp_globals" ; 
+
+    sed -ie "s/ IF_LIF .*/ IF_LIF 0 /" "$temp_globals" ; 
+    sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
+    sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" "$temp_globals" ; 
+    
+    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o matrix.out -lgsl -lgslcblas 
+    srun --priority="TOP" ./matrix.out $n_pop $N $K $dir 
+    
+    sed -ie "s/ IF_LIF .*/ IF_LIF 1 /" "$temp_globals" ; 
+    sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 0 /" "$temp_globals" ; 
+    sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ; 
+    
+    echo "simulation parameters:" 
+    echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial} phi ${dum}" 
+    echo "#########################################################################" 
+    
+    sed -ie "s/ TRIAL_ID .*/ TRIAL_ID ${trial} /" "$temp_globals" 
+
+    sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) .375 /" "$temp_globals" ; 
+    sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) 1.0-.375 /" "$temp_globals" ; 
+    
+    echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas"
+    
+    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
+
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_off 
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_on 
+
+    sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) .25 /" "$temp_globals" ; 
+    sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) .75 /" "$temp_globals" ;
+    
+    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
+    
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_off 
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_on 
+    
 done
+
+rm $temp_files
