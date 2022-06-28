@@ -1,0 +1,11 @@
+prefix=/home/leon/IDIBAPS/cpp/libs/gsl
+exec_prefix=/home/leon/IDIBAPS/cpp/libs/gsl
+libdir=/home/leon/IDIBAPS/cpp/libs/gsl/lib
+includedir=/home/leon/IDIBAPS/cpp/libs/gsl/include
+GSL_CBLAS_LIB=-lgslcblas
+
+Name: GSL
+Description: GNU Scientific Library
+Version: 2.7
+Libs: -L/home/leon/IDIBAPS/cpp/libs/gsl/lib -lgsl ${GSL_CBLAS_LIB} -lm -lm 
+Cflags: -I/home/leon/IDIBAPS/cpp/libs/gsl/include
