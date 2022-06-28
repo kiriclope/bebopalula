@@ -40,7 +40,7 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 #define N_PREF 10000 
 
 #define IF_TRIALS 1 
-#define TRIAL_ID 6 
+#define TRIAL_ID 8 
 
 #define IF_INI_COND 0 
 #define INI_COND_ID 0 
@@ -145,7 +145,7 @@ double *X ;
 #define FIX_KSI_SEED 1 
 #define SEED_KSI (double) 3
 
-#define SEED_CON (double) 6 
+#define SEED_CON (double) 8 
 
 mt19937 con_gen(exp(SEED_CON)) ; 
 mt19937 ksi_gen(exp(SEED_KSI)) ; 
