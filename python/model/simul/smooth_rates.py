@@ -20,9 +20,9 @@ path = gv.path
 
 def get_smooth_rates(path):
     smooth_trial = []
-    for i_trial in range(1, 2+1): 
+    for i_trial in range(1, 1 +1): 
         smooth_ini = []
-        for i_ini in range(1, 4 +1):
+        for i_ini in range(1, 1 +1):
             gv.path = path
             gv.path += '/trial_%d' % i_trial ; 
             gv.path += '/ini_cond_%d' % i_ini ; 

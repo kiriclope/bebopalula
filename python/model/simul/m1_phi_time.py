@@ -83,18 +83,28 @@ fig = plt.figure(figtitle, figsize=(1.618*2*1.5*2, 1.618*2*gv.RANK))
 # # plt.xticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi],
 # #            ['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$'])
 
-ax = plt.subplot(gv.RANK,2,1)
+ax = plt.subplot(gv.RANK,3,1)
 
 for i_pop in range(gv.n_pop) : 
-    plt.plot(time, m1[i_pop], '-', color=gv.pal[i_pop], alpha=alpha[i_pop]) 
+    plt.plot(time, m1[i_pop], '-', color=gv.pal[i_pop], alpha=alpha[i_pop])    
 
 plt.xlabel('Time (s)') 
 plt.ylabel('Bump Amplitude (Hz)')
+plt.xlim([0, 10]) 
+
+ax = plt.subplot(gv.RANK,3,2)
+
+for i_pop in range(gv.n_pop) : 
+    plt.plot(time, m1[i_pop]/m0[i_pop], '-', color=gv.pal[i_pop], alpha=alpha[i_pop])    
+
+plt.ylim([0, 1])
+plt.xlabel('Time (s)') 
+plt.ylabel('Rel. Bump Amplitude (Hz)')
 
 # plt.ylabel('$\\nu^{(1)}_0 / \\nu^{(0)}_0}$ (Hz)') 
 plt.xlim([0, 10]) 
 
-ax = plt.subplot(gv.RANK,2,2) 
+ax = plt.subplot(gv.RANK,3,3) 
 
 for i_pop in range(gv.n_pop) :
     # plt.plot(time, phi[i_pop], color=gv.pal[i_pop], alpha=alpha[i_pop]) 
@@ -105,7 +115,7 @@ for i_pop in range(gv.n_pop) :
         plt.hlines( gv.TRIAL_ID * 180 / gv.N_TRIALS % 180, 0, 10, ls='--') 
         print('phi', np.mean(phi[i_pop, -4:]) * 180 / np.pi, 'phi_trial', gv.TRIAL_ID / gv.N_TRIALS * 180) 
     else:
-        plt.hlines( (gv.PHI_EXT) * 180, 0, 10, ls='--') 
+        plt.hlines( (gv.PHI_EXT) * 180, 0, 30, ls='--') 
         print('phi', np.mean(phi[i_pop, -4:]) * 180 / np.pi , 'phi_ext', (gv.PHI_EXT) * 180 % 180) 
        
 plt.xlabel('Time (s)')
@@ -114,7 +124,7 @@ plt.ylim([0, 180])
 plt.yticks([0, 45, 90, 135, 180])
 # plt.yticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi],
 #            ['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$'])
-# plt.xlim([0, 10])
+plt.xlim([0, 30])
 
 if(gv.RANK==2):
 

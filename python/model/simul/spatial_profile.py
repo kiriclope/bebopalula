@@ -95,30 +95,31 @@ add_vlines()
     
 ax = fig.add_subplot(2,2,4) 
 
-avg_rates = np.nanmean(rates[12:20], axis=0) # over time 
+# avg_rates = np.nanmean(rates[10:20], axis=0) # over time 
+avg_rates = rates[12] # over time 
 for i_pop in range(gv.n_pop):
 
     pop_rates = avg_rates[i_pop]
     pop_rates = pop_rates[~np.isnan(pop_rates)]
+    pop_rates = np.flip(pop_rates, axis=-1) 
     
     smooth_avg_rates = circular_convolution(pop_rates, int(pop_rates.shape[0]*.1 ) ) # over neurons 
-    smooth_avg_rates = np.flip(smooth_avg_rates, axis=-1) 
     
     print(smooth_avg_rates.shape) 
-    avg_m1 = compute_m1(smooth_avg_rates) 
-    avg_phi = compute_phi(smooth_avg_rates) 
+    avg_m1 = compute_m1(pop_rates) 
+    avg_phi = compute_phi(pop_rates) 
 
-    smooth_avg_rates = np.roll(smooth_avg_rates, int((avg_phi/np.pi - 0.5 ) *gv.n_size[0]))
-    
+    # smooth_avg_rates = np.roll(smooth_avg_rates, int((avg_phi/np.pi - 0.5 ) *gv.n_size[0]))
+
     print('[<m1>]', avg_m1, '[<phi>]', avg_phi) 
     
     theta = np.linspace(0, np.pi, gv.n_size[i_pop]) 
-    cos_func =  avg_mean_rates[i_pop] + avg_m1 * np.cos(2*theta - avg_phi ) 
+    cos_func =  avg_mean_rates[i_pop] + avg_m1 * np.cos(2*theta + 2.0 * avg_phi ) 
     
-    # print(theta.shape, cos_func.shape) 
+    print(theta.shape, cos_func.shape) 
     
     plt.plot(theta, smooth_avg_rates, color=gv.pal[i_pop] ) 
-    # plt.plot(theta, cos_func, color=gv.pal[i_pop] ) 
+    plt.plot(theta, cos_func, '--', color=gv.pal[i_pop] ) 
     
 
 plt.xlabel('$\\theta$ (rad)') 

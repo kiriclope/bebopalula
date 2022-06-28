@@ -29,25 +29,6 @@ def compute_phi(signal, axis=-1):
     dft = np.dot(signal_copy, np.exp(-2.0j * np.arange(length) * dPhi) )
     phi = 0.5 * ( np.arctan2(dft.imag, dft.real) % ( 2.0 * np.pi ) ) 
     
-    # phi = ( np.angle( np.dot(signal_copy, np.exp(-2.0j * np.arange(length) * dPhi) ) ) % np.pi )
-    # phi = np.angle( np.dot(signal_copy, np.exp(-2.0j * np.arange(length) * dPhi) ) ) % (2 * np.pi ) - np.pi 
-    # phi = (np.angle( np.dot(signal_copy, np.exp(-2.0j * np.arange(length) * dPhi) ) ) + np.pi ) % ( np.pi) 
-    
-    # spectrum = np.fft.rfft(signal_copy, axis=-1)
-    
-    # # threshold = np.amax(abs(spectrum), axis=-1)/10000 
-    # spectrum[abs(spectrum)<.0000001] = 0
-    
-    # phi = np.amax(np.arctan2(spectrum.imag, spectrum.real), axis=-1)
-    
-    # magnitude = np.abs(spectrum)
-    # phi = np.amax(np.angle(spectrum), axis=-1) 
-
-    # amp = np.fft.rfft(signal_copy, axis=-1) 
-    # phi = np.arctan2(amp.imag,amp.real)[int(signal_copy.shape[1]/2)]
-    
-    # print('signal', signal_copy.shape, 'phi', phi.shape, phi[-1]) 
-    
     if axis!=1 and signal.ndim!=1 :
         phi = np.swapaxes(phi, axis, -1) 
     
@@ -122,7 +103,6 @@ def get_m1_phi_smooth_rates(rates, n_size=gv.n_size, osc=0):
         
         # phi_fft = abs(np.fft.fft(phi[i_pop]-np.mean(phi[i_pop]) ) ) / phi[i_pop].shape[0] 
         # m1_osc[i_pop] = np.max(phi_fft) * np.mean(m1[i_pop]) 
-        
         # m1_osc[i_pop] = np.sqrt(np.mean( (phi[i_pop]-np.mean(phi[i_pop])**2 ) ) )
     
     if(osc):

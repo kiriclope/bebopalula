@@ -14,7 +14,7 @@ n_pop = 2
 n_neurons = 4
 K = 2000
 # folder='shrisha'
-folder = 'on_2'
+folder = 'christos_on_2'
 # folder = 'christos_Ie_840.00_Jee_800.00' # bifurcation for N4K2 n_frac 0.8 no STP
 # folder = 'christos_on' # bifurcation for N4K2 n_frac 0.8 no STP 
 m0 = .001 
@@ -73,12 +73,12 @@ USE = .03
 
 global IF_TRIALS, TRIAL_ID 
 IF_TRIALS = 0 
-TRIAL_ID = 10 
+TRIAL_ID = 1
 N_TRIALS = 10
 
 global IF_INI_COND, INI_COND_ID 
-IF_INI_COND = 0 
-INI_COND_ID = 6 
+IF_INI_COND = 0
+INI_COND_ID = 1
 
 global IF_HYSTERESIS, HYST_JEE, HYST_M0 
 IF_HYSTERESIS = 0 
@@ -123,13 +123,16 @@ Tsyn = []
 JEE = 0
 JEE2 = 0 
 
-global pal 
-pal = ['r', 'b']
-# pal = [sns.color_palette('colorblind')[2],
-#        sns.color_palette('colorblind')[0],
-#        sns.color_palette('colorblind')[1],
-#        sns.color_palette('colorblind')[3]
-#        ] 
+global pal
+try:
+    folder.index('on')
+    pal = ['r', 'b']
+except:
+    pal = [sns.color_palette('colorblind')[2],
+        sns.color_palette('colorblind')[0],
+        sns.color_palette('colorblind')[1],
+        sns.color_palette('colorblind')[3]
+        ] 
 
 global label
 label = ['E', 'I'] 
