@@ -764,6 +764,9 @@ void check_sparse_rep() {
 void create_con_dir() { 
   
   con_path += to_string(n_pop)+"pop"; 
+
+  if(IF_CON_DIR)
+    con_path += "/" + con_dir ;
   
   if(n_pop==1)
     con_path += "/N" + to_string(n_per_pop[0]/1000) ; 

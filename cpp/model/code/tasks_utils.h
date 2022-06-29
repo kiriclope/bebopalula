@@ -36,7 +36,7 @@ void christos_task() {
     for(i=0;i<n_neurons; i++) 
       ff_inputs[i] = ext_inputs_scaled[which_pop[i]]
 	+ sqrt_Ka[0] * A_CUE[which_pop[i]] 
-	* ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_EXT * M_PI) ) ; 
+	* ( 1.0 + EPS_CUE[which_pop[i]] * cos( theta[i] - 2.0 * PHI_CUE * M_PI) ) ; 
     SWITCH_ON = 1 ; 
   }
   if(t_time-TIME_STEADY >= T_CUE_OFF && SWITCH_ON) { 

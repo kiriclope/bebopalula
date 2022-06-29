@@ -81,8 +81,8 @@ for ini in $(seq 1 1 $n_ini); do
 	echo "#########################################################################" 
 	
 	dum=$(echo "print(${trial} / ${n_trials})" | python3)
-	sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) $dum /" "$temp_globals" ; 
-	sed -ie "s/ PHI_DIST (double) .*/ PHI_DIST (double) 1.0 - $dum /" "$temp_globals" ; 
+	sed -ie "s/ PHI_CUE (double) .*/ PHI_CUE (double) $dum /" "$temp_globals" ; 
+	sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) 1.0 - $dum /" "$temp_globals" ; 
 	
 	echo "simulation parameters:" 
 	echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial} phi ${dum} ini ${ini}" 

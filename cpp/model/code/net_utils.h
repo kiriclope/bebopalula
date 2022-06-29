@@ -451,17 +451,32 @@ void create_dir() {
   ostringstream str_kappa_ext, str_phi_ext, str_phi_dist ; 
   str_kappa_ext << fixed << setprecision(2) << KAPPA_EXT ; 
   str_phi_ext << fixed << setprecision(3) << PHI_EXT ; 
-  str_phi_dist << fixed << setprecision(3) << PHI_ERASE ; 
+
+  // christos 
+  ostringstream str_phi_cue, str_phi_erase ; 
+  str_phi_cue << fixed << setprecision(3) << PHI_CUE ; 
+  str_phi_erase << fixed << setprecision(3) << PHI_ERASE ; 
+  
+  ostringstream str_A_cue, str_eps_cue ; 
+  str_A_cue << fixed << setprecision(2) << A_CUE[0] ; 
+  str_eps_cue << fixed << setprecision(2) << EPS_CUE[0] ; 
+
+  ostringstream str_A_erase, str_eps_erase ; 
+  str_A_erase << fixed << setprecision(2) << A_ERASE[0] ; 
+  str_eps_erase << fixed << setprecision(2) << EPS_ERASE[0] ; 
   
   if(IF_DPA) 
     path += "/DPA/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ; 
   if(IF_DUAL) 
     path += "/dual_task/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ; 
   if(IF_DRT) 
-    path += "/DRT/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ; 
-  if(IF_CHRISTOS)
-    path += "/christos/phi_ext_" + str_phi_ext.str() + "_phi_dist_" + str_phi_dist.str() ;
-    
+    path += "/DRT/kappa_" + str_kappa_ext.str() + "_phi_" + str_phi_ext.str() ;
+  
+  if(IF_CHRISTOS){
+    path += "/christos/cue_A_" +  str_A_cue.str() + "_eps_" + str_eps_cue.str() + "_phi_" + str_phi_cue.str() ;
+    path += "/dist_A_" +  str_A_erase.str() + "_eps_" + str_eps_erase.str() + "_phi_" + str_phi_erase.str() ; 
+  }
+  
   if(IF_HYSTERESIS) {
     if(HYST_J_EE==1) 
       path += "/hysteresis/Jee_up"; 

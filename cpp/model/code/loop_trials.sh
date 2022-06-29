@@ -55,51 +55,86 @@ sed -ie "s/ IF_DUAL .*/ IF_DUAL 0 /" "$temp_globals" ;
 sed -ie "s/ IF_CHRISTOS .*/ IF_CHRISTOS 1 /" "$temp_globals" ; 
 sed -ie "s/ IF_STEP .*/ IF_STEP 0 /" "$temp_globals" ; 
 
+sed -ie "s/ IF_CON_DIR .*/ IF_CON_DIR 1 /" "$temp_globals" ; 
+
+sed -ie 's/ con_dir .*/ con_dir="A_cue_0.25"; /' "$temp_globals" ; 
+
 read n_pop N K dir n_trials <<<  "$1 $2 $3 $4 $5" 
 
-for trial in $(seq 1 1 $n_trials); do
+# # generating connectivity with cuda 
+# ( cd ../../../cuda/connectivity/ ; 
+#   sed -ie "s/ n_pop .*/ n_pop  ${n_pop} /" globals.h ;
+#   sed -ie "s/ N_NEURONS .*/ N_NEURONS (unsigned long)  ${N}0000 /" globals.h ;
+#   sed -ie "s/ K .*/ K (double)  ${K} /" globals.h ; 
+#   sed -ie "s/ IF_RING .*/ IF_RING  ${IF_RING} /" globals.h ;
+#   sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" globals.h ; 
+#       make > /dev/null 2>&1 ; 
+# ) 
+
+for trial in $(seq 11 1 $n_trials); do
     
     echo "#########################################################################" 
     ./mem_usage.sh 
     # ./cpu_usage.sh 
     echo "#########################################################################" 
     
+    ## generating connectivity with cpp
     sed -ie "s/ SEED_CON .*/ SEED_CON (double) ${trial} /" "$temp_globals" ; 
-
     sed -ie "s/ IF_LIF .*/ IF_LIF 0 /" "$temp_globals" ; 
     sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
     sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" "$temp_globals" ; 
     
     g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o matrix.out -lgsl -lgslcblas 
-    srun --priority="TOP" ./matrix.out $n_pop $N $K $dir 
+    ./matrix.out $n_pop $N $K ${dir}_off 
+    # srun --priority="TOP" ./matrix.out $n_pop $N $K ${dir}_off
     
     sed -ie "s/ IF_LIF .*/ IF_LIF 1 /" "$temp_globals" ; 
     sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 0 /" "$temp_globals" ; 
     sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ; 
     
+    ## generating connectivity with cuda 
+    # echo "generating connectivity trial ${trial}:" 
+    # echo "#########################################################################" 
+    # ( cd ../../../cuda/connectivity/ ; 
+    #   ./a.out ; 
+    #   # ./a.out > /dev/null ; 
+    # ) 
+        
+    echo "#########################################################################" 
     echo "simulation parameters:" 
-    echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial} phi ${dum}" 
+    echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial}" 
     echo "#########################################################################" 
     
     sed -ie "s/ TRIAL_ID .*/ TRIAL_ID ${trial} /" "$temp_globals" 
-
-    sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) .375 /" "$temp_globals" ; 
+    sed -ie "s/ PHI_CUE (double) .*/ PHI_CUE (double) .375 /" "$temp_globals" ; 
     sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) 1.0-.375 /" "$temp_globals" ; 
     
-    echo "g++ $temp_main -Ofast -s -std=c++11 -o $temp_out -lgsl -lblas"
+    echo "#########################################################################" 
+    echo "compiling close condition"
+    echo "#########################################################################" 
     
     g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
 
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_off 
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_on 
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
+    # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
+    # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
 
-    sed -ie "s/ PHI_EXT (double) .*/ PHI_EXT (double) .25 /" "$temp_globals" ; 
+    echo "#########################################################################" 
+    ./mem_usage.sh     
+    echo "#########################################################################" 
+    echo "compiling far condition"
+    echo "#########################################################################"
+    
+    sed -ie "s/ PHI_CUE (double) .*/ PHI_CUE (double) .25 /" "$temp_globals" ; 
     sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) .75 /" "$temp_globals" ;
     
     g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
     
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_off 
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K albert_on 
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off    
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
+    # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
+    # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
     
 done
 

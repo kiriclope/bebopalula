@@ -2,13 +2,13 @@
 
 mem_usage=`free -m | awk 'NR==2{print $3/$2*100 }'` 
 mem_usage=$( printf "%.0f" $mem_usage )
-echo -e "mem_usage" $mem_usage "%\c" 
+echo -e "mem_usage" $mem_usage "%" 
 
-if [ $mem_usage -gt 60 ]; then
-    echo " MEM_USAGE > 60.0, sleeping for a while ..."    
+if [ $mem_usage -gt 50 ]; then
+    echo " MEM_USAGE > 50.0, sleeping for a while ..."    
 fi
 
-while [ $mem_usage -gt 60 ]; 
+while [ $mem_usage -gt 50 ]; 
 do
     sleep 2s ; 
     mem_usage=`free -m | awk 'NR==2{print $3/$2*100 }'` ;
