@@ -2,6 +2,7 @@
 #define __UTILS__ 
 
 int n_post[N_NEURONS], avg_n_post[2*n_pop] ; 
+int n_pres[N_NEURONS], avg_n_pres[2*n_pop] ; 
 unsigned long *id_post = NULL, *idx_post = NULL ; 
 unsigned long long total_n_post=0 ; 
 
@@ -60,18 +61,21 @@ __host__ void gen_con_sparse_rep() {
   /* id_post = (unsigned long *) malloc( total_n_post * sizeof(unsigned long) ) ;  */ 
   
   /* avg_n_post = (int *) malloc( n_pop * n_pop * sizeof(int) ) ; */ 
-  
-  for(i=0; i<N_NEURONS; i++) {
-    pre_pop = which_pop[i] ; 
-    
-    for(j=0; j<N_NEURONS; j++) { 
-      post_pop = which_pop[j] ; 
-      
-      if(con_vec[j + i * N_NEURONS]) {
-	id_post[counter] = j ; 
-	n_post[i]++ ; 
-      	total_n_post++ ; 
+        
+  for(j=0; j<N_NEURONS; j++) {
+    pre_pop = which_pop[j] ; 
+    for(i=0; i<N_NEURONS; i++) { 
+      post_pop = which_pop[i] ; 
+      if(con_vec[j + i * N_NEURONS]) { // Jij j (pre) to i (post) 
+	id_post[counter] = i ; 
+	
+	n_post[j]++ ; 
       	avg_n_post[pre_pop + post_pop*n_pop]++ ; 
+	
+	n_pres[i]++ ; 
+      	avg_n_pres[pre_pop + post_pop*n_pop]++ ; 
+	
+      	total_n_post++ ; 
 	counter++ ; 
       }
     }
@@ -79,7 +83,20 @@ __host__ void gen_con_sparse_rep() {
   
   /* free(con_vec) ;  */ 
   
-  printf(" total_n_post: %llu \n", total_n_post ) ; 
+  printf(" total_n_con: %llu \n", total_n_post ) ; 
+
+  printf(" average number of presynaptic connections per pop: ") ; 
+  for(i=0; i<2*n_pop; i++) 
+    if(i==0 || i==2) 
+      printf("%lu ", avg_n_pres[i] / n_per_pop[0]) ; 
+    else 
+      printf("%lu ", avg_n_pres[i] / n_per_pop[1]) ; 
+  printf("\n") ; 
+
+  for(i=0; i<n_pop; i++)
+    for(j=0; j<n_pop; j++)
+      printf("%lu ", avg_n_pres[j+i*n_pop] / n_per_pop[i]); 
+  printf("\n") ; 
   
   printf(" average number of postsynaptic connections per pop: ") ; 
   for(i=0; i<2*n_pop; i++) 
@@ -87,6 +104,11 @@ __host__ void gen_con_sparse_rep() {
       printf("%lu ", avg_n_post[i] / n_per_pop[0]) ; 
     else 
       printf("%lu ", avg_n_post[i] / n_per_pop[1]) ; 
+  printf("\n") ; 
+
+  for(i=0; i<n_pop; i++)
+    for(j=0; j<n_pop; j++)
+      printf("%lu ", avg_n_post[j+i*n_pop] / n_per_pop[i]); 
   printf("\n") ; 
   
   printf(" average number of postsynaptic connections per neuron: ") ; 
@@ -104,8 +126,11 @@ __host__ void gen_con_sparse_rep() {
 
 __host__  void create_con_dir() { 
   
-  string mkdirp = "mkdir -p " ; 
-  if(n_pop==1)
+  string mkdirp = "mkdir -p " ;
+
+  path += to_string(n_pop)+"pop" ;
+  
+  if(n_pop==1) 
     path += "/N" + to_string(n_per_pop[0]/1000) ; 
   else 
     path += "/NE_" + to_string(n_per_pop[0]/1000) +  "_NI_" + to_string(n_per_pop[1]/1000) ; 

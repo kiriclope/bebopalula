@@ -8,9 +8,9 @@
 
 using namespace:: std ; 
 
-#define n_pop  2 
-#define N_NEURONS (unsigned long)  40000 
-#define K (double)  2000 
+#define n_pop 2 
+#define N_NEURONS (unsigned long) 40000 
+#define K (double) 2000 
 #define sqrt_K (double) sqrt(K) 
 
 #define E_frac (double) 0.8
@@ -38,9 +38,9 @@ double K_over_Na[n_pop] ;
 ////////////////////////////////// 
 
 int IF_STRUCTURE ; 
-const double IS_STRUCT_SYN[4] = {1.0, 1.0, 1.0, 1.0} ; 
+const double IS_STRUCT_SYN[4] = {1.0, 1.0, 1.0, 1.0} ; // WARNING check that it is the same in cuda globals
 
-#define IF_RING  1 
+#define IF_RING 1 
 #define IF_SPEC 0 
 #define IF_GAUSS 0
 
