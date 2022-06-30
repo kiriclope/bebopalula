@@ -21,7 +21,7 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 string path = "../../cpp/model/connectivity/" ;
 
 #define IF_CON_DIR 1 
-#define CUE (double) 0.4 
+#define CUE (double) 0.35 
 
 unsigned long i, j, i_neuron ;
 int pre_pop, post_pop ; 
