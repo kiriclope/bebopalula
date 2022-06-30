@@ -11,10 +11,10 @@ global n_pop, n_neurons, K, m0, folder, model
 # model = 'binary' 
 model = 'lif' 
 n_pop = 2
-n_neurons = 4
+n_neurons = 2
 K = 2000
 # folder='shrisha'
-folder = 'albert_off'
+folder = 'christos_off'
 # folder = 'christos_Ie_840.00_Jee_800.00' # bifurcation for N4K2 n_frac 0.8 no STP
 # folder = 'christos_on' # bifurcation for N4K2 n_frac 0.8 no STP 
 m0 = .001 
@@ -72,13 +72,13 @@ TAU_REC = 200
 USE = .03 
 
 global IF_TRIALS, TRIAL_ID 
-IF_TRIALS = 1
-TRIAL_ID = 3
+IF_TRIALS = 0 
+TRIAL_ID = 0 
 N_TRIALS = 10
 
 global IF_INI_COND, INI_COND_ID 
 IF_INI_COND = 0 
-INI_COND_ID = 4 
+INI_COND_ID = 0 
 
 global IF_HYSTERESIS, HYST_JEE, HYST_M0 
 IF_HYSTERESIS = 0 
@@ -94,8 +94,17 @@ IF_CHRISTOS  = 1
 
 global KAPPA_EXT, PHI_EXT, PHI_DIST
 KAPPA_EXT = 1.0 
-PHI_EXT = 0.25 
-PHI_DIST = 1-PHI_EXT 
+PHI_EXT = 0.375
+
+global A_CUE, EPS_CUE, A_DIST, EPS_DIST, PHI_CUE, PHI_DIST
+A_CUE = 0.35
+EPS_CUE = 0.2
+
+A_DIST = A_CUE
+EPS_DIST = EPS_CUE
+
+PHI_CUE = 0.25
+PHI_DIST = 1-PHI_CUE 
 
 global T_SAMPLE_ON, T_SAMPLE_OFF
 T_SAMPLE_ON = 2
@@ -293,8 +302,14 @@ def init_param():
         path += '/ODR'
         fig_path += '/ODR'
     elif(IF_CHRISTOS):
-        path += '/christos/phi_ext_%.3f_phi_dist_%.3f' % (PHI_EXT, PHI_DIST) 
-        fig_path += '/christos/phi_ext_%.3f_phi_dist_%.3f' % (PHI_EXT, PHI_DIST) 
+        path += '/christos'
+        path += '/cue_A_%.2f_eps_%.2f_phi_%.3f' % (A_CUE, EPS_CUE, PHI_CUE)
+        path += '/dist_A_%.2f_eps_%.2f_phi_%.3f' % (A_DIST, EPS_DIST, PHI_DIST)
+
+        fig_path += '/christos'
+        fig_path += '/cue_A_%.2f_eps_%.2f_phi_%.3f' % (A_CUE, EPS_CUE, PHI_CUE)
+        fig_path += '/dist_A_%.2f_eps_%.2f_phi_%.3f' % (A_DIST, EPS_DIST, PHI_DIST)
+        
     
     if(IF_HYSTERESIS):
         fig_path += '/hysteresis'; 

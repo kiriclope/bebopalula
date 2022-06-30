@@ -16,7 +16,7 @@ gv.init_param()
 print('reading connectivity from:', gv.con_path) 
 
 figtitle = 'connectivity' 
-fig = plt.figure(figtitle, figsize=(1.25*1.618*1.5*4, 1.618*1.25)) 
+fig = plt.figure(figtitle, figsize=(1.25*1.618*1.5*4, 1.618*1.25*4)) 
 
 gv.n_neurons = int(gv.n_neurons * 10000)
 
@@ -62,8 +62,8 @@ print(cum_n_per_pop)
 
 counter=0 
 
-for i in range(1) : # presynaptic 
-    for j in range(1) : # postsynaptic 
+for i in range(2) : # presynaptic 
+    for j in range(2) : # postsynaptic 
 
         con_mat = raw_con_mat[ cum_n_per_pop[i]:cum_n_per_pop[i+1], cum_n_per_pop[j]:cum_n_per_pop[j+1] ]
         
@@ -87,14 +87,14 @@ for i in range(1) : # presynaptic
         n_pres = np.sum(con_mat, axis=0) 
         n_post = np.sum(con_mat, axis=1) 
         
-        ax = fig.add_subplot(1,4,1+counter) 
+        ax = fig.add_subplot(4,4,1+counter) 
         im = ax.imshow(con_mat, cmap='jet', vmin=0, vmax=1, origin='lower') 
         ax.grid(False) 
         plt.xlabel('Presynaptic') 
         plt.ylabel('Postsynaptic') 
         ax.set_title('Connections') 
         
-        ax = fig.add_subplot(1, 4, 2+counter) 
+        ax = fig.add_subplot(4, 4, 2+counter) 
         theta = np.linspace(0, np.pi, n_per_pop[j] ) 
         plt.plot(theta[1:], con_prob[1:], color=gv.pal[j])
         plt.xlabel('$\\theta$')
@@ -110,12 +110,12 @@ for i in range(1) : # presynaptic
         # plt.xticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi], 
         #            ['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{2}$', r'$\pi$'])
         
-        ax = fig.add_subplot(1,4,3+counter) 
+        ax = fig.add_subplot(4,4,3+counter) 
         plt.hist(n_pres, histtype='step', color=gv.pal[j]) 
         plt.xlabel('$K_{pres}$') 
         plt.ylabel('Count') 
         
-        ax = fig.add_subplot(1,4,4+counter) 
+        ax = fig.add_subplot(4,4,4+counter) 
         plt.hist(n_post, histtype='step', color=gv.pal[j]) 
         plt.xlabel('$K_{post}$') 
         plt.ylabel('Count') 
