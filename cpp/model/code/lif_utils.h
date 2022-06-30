@@ -332,7 +332,8 @@ void update_net_inputs() {
   
   if(SIGMA_FF>0)
     for(i=0;i<n_neurons;i++) 
-      net_inputs[i] += sqrt(ext_inputs_scaled[which_pop[i]] * SIGMA_FF / sqrt_Ka[which_pop[i]]) * white_noise(rand_gen) ; 
+      /* net_inputs[i] += sqrt(ext_inputs_scaled[which_pop[i]] * SIGMA_FF / sqrt_Ka[which_pop[i]]) * white_noise(rand_gen) ;  */
+      net_inputs[i] += sqrt(SIGMA_FF) * white_noise(rand_gen) ; 
   
   /* if(IF_POISSON_FF) { */
   /*   net_inputs[i] = 0.0 ;  */

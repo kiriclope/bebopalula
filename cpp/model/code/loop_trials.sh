@@ -62,7 +62,7 @@ read n_pop N K dir n_trials cue <<<  "$1 $2 $3 $4 $5 $6"
 sed -ie "s/ CUE .*/ CUE (double) ${cue} /" "$temp_globals" ;
 
 # generating connectivity with cuda 
-( cd ../../../cuda/connectivity/ ; 
+( cd ../../../cuda/connectivity2/ ; 
   sed -ie "s/ n_pop .*/ n_pop ${n_pop} /" globals.h ;
   sed -ie "s/ N_NEURONS .*/ N_NEURONS (unsigned long) ${N}0000 /" globals.h ;
   sed -ie "s/ K .*/ K (double) ${K} /" globals.h ; 
@@ -97,7 +97,7 @@ for trial in $(seq 1 1 $n_trials); do
     # generating connectivity with cuda 
     echo "generating connectivity trial ${trial} cue ${cue}:" 
     echo "#########################################################################" 
-    ( cd ../../../cuda/connectivity/ ; 
+    ( cd ../../../cuda/connectivity2/ ; 
       # ./a.out ; 
       ./a.out > /dev/null ; 
     ) 

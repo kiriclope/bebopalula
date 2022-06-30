@@ -128,7 +128,7 @@ const double kappas[2] = {KAPPA, KAPPA*.5} ;
 #define DEG_TO_RAD (double) M_PI/180.0 
 const double SIGMA[4] = {60.0, 60.0, 70.0, 60.0} ; 
 
-#define SIGMA_FF 1.0 
+#define SIGMA_FF 0.0 
 #define IF_POISSON_FF 0
 
 double *X ; 
@@ -227,7 +227,7 @@ const double A_STEP[2] = {1.55, 1.25} ;
 //////////////////////////////////////
 
 #define IF_CON_DIR 0
-#define CUE (double) .25
+#define CUE (double) 1.0
 
 #define IF_CHRISTOS 1 
 #define T_CUE_ON (double) 2000 
