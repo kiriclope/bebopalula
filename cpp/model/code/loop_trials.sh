@@ -57,49 +57,51 @@ sed -ie "s/ IF_STEP .*/ IF_STEP 0 /" "$temp_globals" ;
 
 sed -ie "s/ IF_CON_DIR .*/ IF_CON_DIR 1 /" "$temp_globals" ; 
 
-sed -ie 's/ con_dir .*/ con_dir="A_cue_0.25"; /' "$temp_globals" ; 
+read n_pop N K dir n_trials cue <<<  "$1 $2 $3 $4 $5 $6" 
 
-read n_pop N K dir n_trials <<<  "$1 $2 $3 $4 $5" 
+sed -ie "s/ CUE .*/ CUE (double) ${cue} /" "$temp_globals" ;
 
-# # generating connectivity with cuda 
-# ( cd ../../../cuda/connectivity/ ; 
-#   sed -ie "s/ n_pop .*/ n_pop  ${n_pop} /" globals.h ;
-#   sed -ie "s/ N_NEURONS .*/ N_NEURONS (unsigned long)  ${N}0000 /" globals.h ;
-#   sed -ie "s/ K .*/ K (double)  ${K} /" globals.h ; 
-#   sed -ie "s/ IF_RING .*/ IF_RING  ${IF_RING} /" globals.h ;
-#   sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" globals.h ; 
-#       make > /dev/null 2>&1 ; 
-# ) 
+# generating connectivity with cuda 
+( cd ../../../cuda/connectivity/ ; 
+  sed -ie "s/ n_pop .*/ n_pop ${n_pop} /" globals.h ;
+  sed -ie "s/ N_NEURONS .*/ N_NEURONS (unsigned long) ${N}0000 /" globals.h ;
+  sed -ie "s/ K .*/ K (double) ${K} /" globals.h ; 
+  sed -ie "s/ IF_RING .*/ IF_RING ${IF_RING} /" globals.h ;
+  sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" globals.h ; 
+  sed -ie "s/ IF_CON_DIR .*/ IF_CON_DIR 1 /" globals.h ; 
+  sed -ie "s/ CUE .*/ CUE (double) ${cue} /" globals.h ; 
+  make > /dev/null 2>&1 ; 
+) 
 
-for trial in $(seq 11 1 $n_trials); do
+for trial in $(seq 1 1 $n_trials); do
     
     echo "#########################################################################" 
     ./mem_usage.sh 
     # ./cpu_usage.sh 
     echo "#########################################################################" 
     
-    ## generating connectivity with cpp
-    sed -ie "s/ SEED_CON .*/ SEED_CON (double) ${trial} /" "$temp_globals" ; 
-    sed -ie "s/ IF_LIF .*/ IF_LIF 0 /" "$temp_globals" ; 
-    sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
-    sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" "$temp_globals" ; 
+    # ## generating connectivity with cpp
+    # sed -ie "s/ SEED_CON .*/ SEED_CON (double) ${trial} /" "$temp_globals" ; 
+    # sed -ie "s/ IF_LIF .*/ IF_LIF 0 /" "$temp_globals" ; 
+    # sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 1 /" "$temp_globals" ; 
+    # sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 1 /" "$temp_globals" ; 
     
-    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o matrix.out -lgsl -lgslcblas 
-    ./matrix.out $n_pop $N $K ${dir}_off 
-    # srun --priority="TOP" ./matrix.out $n_pop $N $K ${dir}_off
+    # g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o matrix.out -lgsl -lgslcblas 
+    # ./matrix.out $n_pop $N $K ${dir}_off 
+    # # srun --priority="TOP" ./matrix.out $n_pop $N $K ${dir}_off
     
-    sed -ie "s/ IF_LIF .*/ IF_LIF 1 /" "$temp_globals" ; 
-    sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 0 /" "$temp_globals" ; 
-    sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ; 
+    # sed -ie "s/ IF_LIF .*/ IF_LIF 1 /" "$temp_globals" ; 
+    # sed -ie "s/ IF_GEN_CON .*/ IF_GEN_CON 0 /" "$temp_globals" ; 
+    # sed -ie "s/ IF_SAVE_SPARSE_REP .*/ IF_SAVE_SPARSE_REP 0 /" "$temp_globals" ; 
     
-    ## generating connectivity with cuda 
-    # echo "generating connectivity trial ${trial}:" 
-    # echo "#########################################################################" 
-    # ( cd ../../../cuda/connectivity/ ; 
-    #   ./a.out ; 
-    #   # ./a.out > /dev/null ; 
-    # ) 
-        
+    # generating connectivity with cuda 
+    echo "generating connectivity trial ${trial} cue ${cue}:" 
+    echo "#########################################################################" 
+    ( cd ../../../cuda/connectivity/ ; 
+      # ./a.out ; 
+      ./a.out > /dev/null ; 
+    ) 
+    
     echo "#########################################################################" 
     echo "simulation parameters:" 
     echo "n_pop ${n_pop} n_neurons ${N}0000 K ${K} ${dir} trial ${trial}" 
@@ -115,11 +117,12 @@ for trial in $(seq 11 1 $n_trials); do
     
     g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
 
+    # ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
     screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
     screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
     # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
     # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
-
+    
     echo "#########################################################################" 
     ./mem_usage.sh     
     echo "#########################################################################" 

@@ -147,7 +147,7 @@ double *X ;
 
 #define SEED_CON (double) 1 // rd()
 
-mt19937 con_gen(exp(SEED_CON)) ; 
+mt19937 con_gen(sqrt(SEED_CON)) ; 
 mt19937 ksi_gen(exp(SEED_KSI)) ; 
 mt19937 ksi_1_gen(sqrt(SEED_KSI)) ; 
 mt19937 covar_ksi_gen(10.0) ; 
@@ -227,7 +227,7 @@ const double A_STEP[2] = {1.55, 1.25} ;
 //////////////////////////////////////
 
 #define IF_CON_DIR 0
-string con_dir = "christos" ;
+#define CUE (double) .25
 
 #define IF_CHRISTOS 1 
 #define T_CUE_ON (double) 2000 
@@ -237,12 +237,12 @@ string con_dir = "christos" ;
 #define T_ERASE_OFF (double) 6000 
 
 #define PHI_CUE (double) .25
-const double A_CUE[2] = {.25, 0.0} ; // {2.4, 1.0} 
+const double A_CUE[2] = {CUE, 0.0} ; // {2.4, 1.0} 
 const double EPS_CUE[2] =  {0.2, 0.0} ; // {.17 , 0.0} 
 
 #define IF_DIST 0
 #define PHI_ERASE (double) .75 
-const double A_ERASE[2] = {.25, 0.0} ; 
+const double A_ERASE[2] = {CUE, 0.0} ; 
 const double EPS_ERASE[2] = {0.2, 0.0} ; 
 
 
