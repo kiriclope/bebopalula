@@ -13,7 +13,7 @@ importlib.reload(sys.modules['get_m1'])
 gv.IF_INI_COND = 0
 gv.IF_TRIALS = 0
 
-gv.N_TRIALS = 100
+gv.N_TRIALS = 20
 gv.init_param()
 
 path = gv.path
@@ -28,23 +28,23 @@ def get_diffusion(path):
             time, rates = get_time_rates(path=gv.path) 
             _, phi = decode_bump(rates[:,0]) 
             # phi_ini.append( phi[0] - (1.0 - i_trial/gv.N_TRIALS) * np.pi )                
-
+            
             print('phi', phi.shape)
             Dphi = ( phi - (1-gv.PHI_DIST) * np.pi )
             
-            Dphi_trial.append(Dphi) 
+            phi_trial.append(phi) 
             print('phi', phi[28] * 180 / np.pi,
                   'phi_dist', 180-gv.PHI_DIST * 180,
                   'Dphi', Dphi[28] * 180 / np.pi) 
         except:
-            Dphi_trial.append(np.nan*np.zeros(40)) 
+            phi_trial.append(np.nan*np.zeros(40)) 
             print('error') 
             pass
                 
-    Dphi_trial = np.asarray(Dphi_trial) 
-    print('Dphi_trial', Dphi_trial.shape) 
+    phi_trial = np.asarray(phi_trial) 
+    print('phi_trial', phi_trial.shape) 
     
-    return Dphi_trial * 180 / np.pi 
+    return phi_trial * 180 / np.pi 
 
 Dphi_off = get_diffusion(path)
 

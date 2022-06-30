@@ -11,11 +11,11 @@ global n_pop, n_neurons, K, m0, folder, model
 # model = 'binary' 
 model = 'lif' 
 n_pop = 2
-n_neurons = 2
+n_neurons = 4
 K = 2000
 # folder='shrisha'
-folder = 'christos_off'
-# folder = 'christos_Ie_840.00_Jee_800.00' # bifurcation for N4K2 n_frac 0.8 no STP
+folder = 'albert_on'
+# folder = 'christos_Ie_840.00_Jee_800.00' # bifurcation for N4K2 n_frac 0.8 no STP 
 # folder = 'christos_on' # bifurcation for N4K2 n_frac 0.8 no STP 
 m0 = .001 
 nu0 = .05 
@@ -97,14 +97,14 @@ KAPPA_EXT = 1.0
 PHI_EXT = 0.375
 
 global A_CUE, EPS_CUE, A_DIST, EPS_DIST, PHI_CUE, PHI_DIST
-A_CUE = 0.35
-EPS_CUE = 0.2
-
-A_DIST = A_CUE
-EPS_DIST = EPS_CUE
-
 PHI_CUE = 0.25
 PHI_DIST = 1-PHI_CUE 
+
+A_CUE = 1.
+EPS_CUE = 0.2
+
+A_DIST = 1.
+EPS_DIST = EPS_CUE
 
 global T_SAMPLE_ON, T_SAMPLE_OFF
 T_SAMPLE_ON = 2
@@ -138,7 +138,7 @@ global pal
 if folder.find('on')!=-1:
     pal = ['r', 'b']
 else:
-    pal = [sns.color_palette('colorblind')[2],
+    pal = [sns.color_palette('colorblind')[3],
            sns.color_palette('colorblind')[0],
            sns.color_palette('colorblind')[1],
            sns.color_palette('colorblind')[3]
