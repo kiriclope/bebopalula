@@ -45,7 +45,7 @@ __host__ void init_globals() {
     printf("%.2f ", K_over_Na[i] ) ;     
   }
   printf("\n") ; 
-
+  
 }
 
 __host__ void gen_con_sparse_rep() { 
@@ -66,7 +66,7 @@ __host__ void gen_con_sparse_rep() {
     pre_pop = which_pop[j] ; 
     for(i=0; i<N_NEURONS; i++) { 
       post_pop = which_pop[i] ; 
-      if(con_vec[j + i * N_NEURONS]) { // Jij j (pre) to i (post) 
+      if(con_vec[i + j * N_NEURONS]) { // Jij j (pre) to i (post) 
 	id_post[counter] = i ; 
 	
 	n_post[j]++ ; 
@@ -129,6 +129,12 @@ __host__  void create_con_dir() {
   string mkdirp = "mkdir -p " ;
 
   path += to_string(n_pop)+"pop" ;
+
+  ostringstream str_cue;  
+  str_cue << fixed << setprecision(2) << CUE ; 
+  
+  if(IF_CON_DIR)
+    path += "/A_cue_" + str_cue.str() ;
   
   if(n_pop==1) 
     path += "/N" + to_string(n_per_pop[0]/1000) ; 
@@ -169,7 +175,7 @@ __host__ void save_to_con_file() {
 
   if(IF_SAVE_CON_VEC) {
     cout << "saving connectivity vector to: "; 
-    file_path = path + "/con_mat.dat" ; 
+    file_path = path + "/con_vec.dat" ; 
     cout << file_path << endl ; 
     
     file_con_mat = fopen(file_path.c_str() , "wb") ; 

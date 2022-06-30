@@ -10,10 +10,10 @@ __device__ curandState dev_states[N_NEURONS] ;
 /* #define N_THREADS 512 // 512 (default), 256 threads per block for high occupancy  */
 #define N_THREADS 1024 
 
-#define IF_CHUNCKS 1
+#define IF_CHUNCKS 1 
 
-#define N_NEURONS_PER_CHUNCK (unsigned long) 10000  
-#define N_CHUNCKS N_NEURONS / N_NEURONS_PER_CHUNCK // otherwise memory problem if N_NEURONS > 20000 because of array[CHUNCK_SIZE] too large 
+#define N_NEURONS_PER_CHUNCK (unsigned long) 10000 
+#define N_CHUNCKS N_NEURONS / N_NEURONS_PER_CHUNCK // otherwise memory problem if N_NEURONS > 20000 because of array[CHUNCK_SIZE] too large
 #define CHUNCK_SIZE N_NEURONS * N_NEURONS_PER_CHUNCK 
 
 __device__ int dev_i_chunck ; 
@@ -47,8 +47,10 @@ __global__ void init_dev_globals() {
   
   if(id < N_NEURONS_PER_CHUNCK && i_neuron < N_NEURONS) 
     for(unsigned long i=0; i<N_NEURONS; i++) { 
-      dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK] = 0 ; 
-      dev_con_vec_chunck[id + i * N_NEURONS_PER_CHUNCK] = 0 ; 
+      /* dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK] = 0 ;  */
+      /* dev_con_vec_chunck[id + i * N_NEURONS_PER_CHUNCK] = 0 ;  */
+      dev_con_prob_chunck[i + id * N_NEURONS] = 0 ; 
+      dev_con_vec_chunck[i + id * N_NEURONS] = 0 ; 
     } 
 } 
   

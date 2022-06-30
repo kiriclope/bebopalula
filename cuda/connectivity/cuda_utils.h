@@ -3,13 +3,13 @@
 
 __global__ void setup_kernel() { 
   unsigned long id = threadIdx.x + blockIdx.x * blockDim.x ; 
-  /* unsigned long i_neuron = (unsigned long) ( id + dev_i_chunck * N_NEURONS_PER_CHUNCK ) ; */
+  unsigned long i_neuron = (unsigned long) ( id + dev_i_chunck * N_NEURONS_PER_CHUNCK ) ;
   /* Each thread gets different seed, a different sequence number, no offset */ 
-  if(id < N_NEURONS_PER_CHUNCK)
-    curand_init(clock64(), id, 0, &dev_states[id]) ;
-  /* if(id < N_NEURONS_PER_CHUNCK & i_neuron < N_NEURONS)  */
-    /* curand_init(clock64(), i_neuron, 0, &dev_states[i_neuron]) ; */
-    
+  /* if(id < N_NEURONS_PER_CHUNCK) */
+  /*   curand_init(clock64(), id, 0, &dev_states[id]) ; */
+  if(id < N_NEURONS_PER_CHUNCK & i_neuron < N_NEURONS) 
+    curand_init(clock64(), id, 0, &dev_states[i_neuron]) ; 
+  
   /* if(id<2) {  */
   /*   cuPrintf("currand init: ") ;  */
   /*   cuPrintf("%d", dev_states[id]) ;  */
@@ -67,11 +67,14 @@ __global__ void kernel_gen_con_prob() {
         
     for(unsigned long i=0; i<N_NEURONS; i++) { // id (pre) -> i (post)       
       dev_post_pop = dev_which_pop[i] ; 
-      dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] = dev_K_over_Na[dev_pre_pop] ;
+      /* dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] = dev_K_over_Na[dev_pre_pop] ; */
+      dev_con_prob_chunck[i + id * N_NEURONS] = dev_K_over_Na[dev_pre_pop] ;
       
       if(DEV_IF_STRUCTURE)
 	if(DEV_IS_STRUCT_SYN[dev_pre_pop + dev_post_pop * n_pop]) 
-	  dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] *= ( 1.0 + kappa * cos( dev_theta[i_neuron] - dev_theta[i] ) ) ; 
+	  /* dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] *= ( 1.0 + kappa * cos( dev_theta[i_neuron] - dev_theta[i] ) ) ; */
+	  dev_con_prob_chunck[i + id * N_NEURONS] *= ( 1.0 + kappa * cos( dev_theta[i_neuron] - dev_theta[i] ) ) ; 
+      
     } 
   } 
 } 
@@ -101,11 +104,18 @@ __global__ void kernel_gen_con_vec() {
   
   if(id < N_NEURONS_PER_CHUNCK && i_neuron < N_NEURONS) // presynaptic neuron (columns) 
     for(unsigned long i=0; i<N_NEURONS; i++) { // post
-      if( dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK] >= unif_dist(id) ) { // WARNING must be id inside unif otherwise problems
-	dev_con_vec_chunck[id + i * N_NEURONS_PER_CHUNCK] = 1 ; 
+      /* if( dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK] >= unif_dist(id) ) { // WARNING must be id inside unif otherwise problems */
+      /* 	dev_con_vec_chunck[id + i * N_NEURONS_PER_CHUNCK] = 1 ;  */
+      /* 	dev_total_n_post++ ;  */
+      /* 	dev_n_post[i_neuron]++ ;  */
+      /* } */
+
+      if( dev_con_prob_chunck[i + id * N_NEURONS] >= unif_dist(id) ) { 
+	dev_con_vec_chunck[i + id * N_NEURONS] = 1 ; 
 	dev_total_n_post++ ; 
 	dev_n_post[i_neuron]++ ; 
       } 
+      
       /* else  */ 
       /* 	dev_con_vec_chunck[id + i * N_NEURONS_PER_CHUNCK] = 0 ;  */
     }  

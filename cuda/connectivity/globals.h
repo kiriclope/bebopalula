@@ -20,6 +20,9 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 // string path = "/homecentral/alexandre.mahrach/IDIBAPS/connectivity/" ;
 string path = "../../cpp/model/connectivity/" ;
 
+#define IF_CON_DIR 1 
+#define CUE (double) 0.4 
+
 unsigned long i, j, i_neuron ;
 int pre_pop, post_pop ; 
 int n_pref ; 
@@ -42,7 +45,7 @@ const double IS_STRUCT_SYN[4] = {1.0, 1.0, 1.0, 1.0} ; // WARNING check that it 
 
 #define IF_RING 1 
 #define IF_SPEC 0 
-#define IF_GAUSS 0
+#define IF_GAUSS 0 
 
 #define KAPPA (double) 0.25
 #define KAPPA_E (double) 0.25
