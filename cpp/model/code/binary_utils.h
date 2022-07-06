@@ -110,7 +110,7 @@ void update_spins_and_post_inputs() {
     
     if(spin[i_neuron]==0) { 
       
-      ISI[i_neuron] = t_time - t_spike[i_neuron] ;
+      ISI = t_time - t_spike[i_neuron] ;
       t_spike[i_neuron] = t_time ;
       
       if(IF_STP) 
@@ -171,11 +171,11 @@ void initial_conditions_bin() {
   
   /*   if(net_inputs[i_neuron]>=THETA[pre_pop]) { // if spike */ 
   
-  /*     ISI[i_neuron] = t_time - t_spike[i_neuron] ; */ 
+  /*     ISI = t_time - t_spike[i_neuron] ; */ 
   /*     t_spike[i_neuron] = t_time ; */ 
   
   /*     if(IF_STP) */ 
-  /* 	update_stp_variables_lif(ISI[i_neuron]) ; */ 
+  /* 	update_stp_variables_lif(ISI) ; */ 
   
   /*     update_post_inputs() ;  */ 
   /*     spin[i_neuron] = 1 ;  */ 
@@ -201,7 +201,7 @@ void initial_conditions_bin() {
     
     if(ini_proba[pre_pop]>=unif(rand_gen)) { 
       
-      ISI[i_neuron] = t_time - t_spike[i_neuron] ; 
+      ISI = t_time - t_spike[i_neuron] ; 
       t_spike[i_neuron] = t_time ; 
       
       if(IF_STP) 

@@ -31,10 +31,11 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 
 #define DURATION (double) 10.00E3 // 10.E3 // 
 
-#define TIME_WINDOW (double) 0.2500E3 // 1.00E3 // 10.E3 // 
+#define TIME_WINDOW (double) 0.0500E3 // 1.00E3 // 10.E3 // 
 #define TIME_REC (double) 30.00E3 // 1.00E3 // 10.E3 // 
 #define TIME_REC_SPIKES (double) 10.00E3 // 1.00E3 // 10.E3 // 
 
+#define REC_INPUTS 0 
 #define IF_RK2 0 
 
 #define N_PREF 10000 
@@ -57,7 +58,7 @@ const double Trate[2] = {10.0, 10.0} ;
 #define Tsyn0 1.0 // for one population 
 
 #define GAIN (double) 1.0 
-#define M0 (double) 0.0015
+#define M0 (double) 0.001
 
 // 0.05 if with 0.01 without stp 
 #define IF_LOOP_M0 0 
@@ -114,12 +115,12 @@ double *overlaps ;
 
 #define KAPPA (double) .25 // 4 // 3.5 // 12.0 14 // rank 1: 4.0 
 #define KAPPA_1 (double) 4 // 3.5 // 8.0 12 
-#define KAPPA_VAR (double) 0.0
+#define KAPPA_VAR (double) 0.0 
 
 #define IF_KAPPA_DIST 0 
 lognormal_distribution<double> log_normal(KAPPA, KAPPA_VAR) ; 
 
-const double kappas[2] = {KAPPA, KAPPA*.5} ; 
+const double kappas[4] = {KAPPA, KAPPA*.5, KAPPA, KAPPA*.5} ; 
 
 #define KAPPA_CORR (double) 0 
 
@@ -128,8 +129,11 @@ const double kappas[2] = {KAPPA, KAPPA*.5} ;
 #define DEG_TO_RAD (double) M_PI/180.0 
 const double SIGMA[4] = {60.0, 60.0, 70.0, 60.0} ; 
 
-#define SIGMA_FF 0.0 
-#define IF_POISSON_FF 0
+#define SIGMA_FF 0.25
+const double sigma_FF[2] = {SIGMA_FF, SIGMA_FF} ; 
+ 
+double var_ff[2] = {0.0, 0.0} ; 
+#define IF_POISSON_FF 0 
 
 double *X ; 
 
@@ -209,11 +213,11 @@ int SWITCH_OFF = 0 ;
 #define KAPPA_EXT (double) 1.0 
 #define PHI_EXT (double) 0.25 
 
-#define KAPPA_DIST (double) 0.5
-#define PHI_DIST (double) 0.75
+#define KAPPA_DIST (double) 0.5 
+#define PHI_DIST (double) 0.75 
 
 #define KAPPA_CUE (double) 0.25 
-#define KAPPA_TEST (double) 2.0
+#define KAPPA_TEST (double) 2.0 
 
 #define IF_TUNED_FF 0
 
@@ -236,15 +240,14 @@ const double A_STEP[2] = {1.55, 1.25} ;
 #define T_ERASE_ON (double) 5000
 #define T_ERASE_OFF (double) 6000 
 
-#define PHI_CUE (double) .25
-const double A_CUE[2] = {CUE, 0.0} ; // {2.4, 1.0} 
+#define PHI_CUE (double) .25 
+const double A_CUE[2] = {1.0, 0.0} ; // {2.4, 1.0} 
 const double EPS_CUE[2] =  {0.2, 0.0} ; // {.17 , 0.0} 
 
-#define IF_DIST 0
+#define IF_DIST 0 
 #define PHI_ERASE (double) .75 
-const double A_ERASE[2] = {CUE, 0.0} ; 
+const double A_ERASE[2] = {0.0, 0.0} ; 
 const double EPS_ERASE[2] = {0.2, 0.0} ; 
-
 
 //////////////////////////////////////
 // DUAL TASK
@@ -310,7 +313,7 @@ const double TAU_NMDA[4] = {50.0, 40.0, 50.0, 40.0} ;
 const double EXP_DT_TAU_NMDA[4] = { exp(-DT/TAU_NMDA[0]) , exp(-DT/TAU_NMDA[1]), exp(-DT/TAU_NMDA[2]), exp(-DT/TAU_NMDA[3])} ; 
 const double R_NMDA[2] = {1.0, 9.0} ; 
 
-double *ISI ; 
+double ISI ; 
 
 string str_volt ; 
 ofstream file_volt ; 
@@ -329,7 +332,7 @@ ofstream file_spike_times ;
 
 #define TAU_FAC (double) 450 
 #define TAU_REC (double) 200 
-#define USE (double) 0.03 
+#define USE (double) 0.03
 
 const double EXP_DT_TAU_FAC = exp(-DT/TAU_FAC) ; 
 const double DT_OVER_TAU_REC = DT/TAU_REC ; 

@@ -11,3 +11,4 @@ cp globals.h $temp_globals
 sed -i 's/ "globals.h" .*/ "'"$temp_globals"'" /' "$temp_main" ; 
 
 echo $temp_globals $temp_main $temp_out
+

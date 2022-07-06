@@ -72,8 +72,8 @@ void markram() {
 
 /* Markram98, Mato  */
 void mato() { 
-  u_stp[i_neuron] = u_stp[i_neuron] * exp(- ISI[i_neuron] / TAU_FAC ) + USE * ( 1. - u_stp[i_neuron] * exp(- ISI[i_neuron] / TAU_FAC ) ) ; 
-  x_stp[i_neuron] = x_stp[i_neuron] * ( 1. - u_stp[i_neuron] ) * exp(- ISI[i_neuron] / TAU_REC ) + 1. - exp(- ISI[i_neuron] / TAU_REC ) ; 
+  u_stp[i_neuron] = u_stp[i_neuron] * exp(- ISI / TAU_FAC ) + USE * ( 1. - u_stp[i_neuron] * exp(- ISI / TAU_FAC ) ) ; 
+  x_stp[i_neuron] = x_stp[i_neuron] * ( 1. - u_stp[i_neuron] ) * exp(- ISI / TAU_REC ) + 1. - exp(- ISI / TAU_REC ) ; 
   A_u_x_stp[i_neuron] = u_stp[i_neuron] * x_stp[i_neuron] ; 
 }
 
@@ -120,7 +120,7 @@ void mongillo_alt() { // mongillo
   x_stp[i_neuron] = x_stp_mongillo[i_neuron+id_post[j]*n_neurons] ; 
   
   if (u_stp[i_neuron]==1.0)
-    if ( unif(rand_gen)<(1.0-exp(-ISI[i_neuron]/TAU_FAC)))
+    if ( unif(rand_gen)<(1.0-exp(-ISI/TAU_FAC)))
       u_stp[i_neuron]=0.0;
   
   if (u_stp[i_neuron]==0.0)
@@ -128,7 +128,7 @@ void mongillo_alt() { // mongillo
       u_stp[i_neuron]=1.0;
   
   if (x_stp[i_neuron]==0.0)
-    if ( unif(rand_gen)<(1.0-exp(-ISI[i_neuron]/TAU_REC)))
+    if ( unif(rand_gen)<(1.0-exp(-ISI/TAU_REC)))
       x_stp[i_neuron]=1.0 ; 
   
   A_u_x_stp[i_neuron] = u_stp[i_neuron] * x_stp[i_neuron] ;

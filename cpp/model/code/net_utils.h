@@ -122,7 +122,7 @@ void init_globals() {
   mean_rates = new double [n_pop]() ; // population averaged rate also averaged over TIME_WINDOW  
   filter_rates = new double [n_neurons]() ; // temporal averaged over TIME_WINDOW
 
-  ISI = new double [n_neurons]() ; // temporal averaged over TIME_WINDOW 
+  // ISI = new double [n_neurons]() ; // temporal averaged over TIME_WINDOW 
   
   // h^(ab)_i=h^b_i, inputs from presynaptic population b to postsynaptic neuron (i,a)
   // here i goes threw all the populations 
@@ -135,16 +135,17 @@ void init_globals() {
     for(i=0;i<n_pop;i++) // presynaptic population b 
       inputs_nmda[i] = new double [n_neurons]() ; 
   }
-  
-  filter_inputs = new double *[n_pop]() ; 
-  for(i=0;i<n_pop;i++) // presynaptic population b 
-    filter_inputs[i] = new double [n_neurons]() ; 
+
+  if(REC_INPUTS) {
+    filter_inputs = new double *[n_pop]() ; 
+    for(i=0;i<n_pop;i++) // presynaptic population b 
+      filter_inputs[i] = new double [n_neurons]() ; 
+  }
   
   // htot_i = h^E_i + h^I_i, net input into neuron i
-  net_inputs = new double [n_neurons]() ;   
-
+  net_inputs = new double [n_neurons]() ; 
   ff_inputs = new double [n_neurons]() ; 
-
+  
   if(IF_RK2)
     net_inputs_RK2 = new double [n_neurons]() ; 
   
@@ -187,13 +188,14 @@ void init_globals() {
 void delete_globals() { 
   delete [] mean_rates ; 
   delete [] filter_rates ; 
-  delete [] ISI ;
+  // delete [] ISI ;
   
   delete [] inputs ;
   if(IF_NMDA)
     delete [] inputs_nmda ;
+
+  if(REC_INPUTS) delete [] filter_inputs ;
   
-  delete [] filter_inputs ; 
   delete [] net_inputs ;
   if(IF_RK2)
     delete [] net_inputs_RK2 ; 
@@ -607,12 +609,15 @@ void save_to_file() {
     if(HYST_M0!=0)
       file_inputs << m0 ; 
   }
-  for(i=0;i<n_pop;i++) 
-    for(j=0;j<n_neurons;j++) { 
-      file_inputs << " " << filter_inputs[i][j]*DT/TIME_WINDOW ; 
-      filter_inputs[i][j] = 0 ; 
-    } 
-  file_inputs << endl ;   
+  
+  if(REC_INPUTS){
+    for(i=0;i<n_pop;i++) 
+      for(j=0;j<n_neurons;j++) { 
+	file_inputs << " " << filter_inputs[i][j]*DT/TIME_WINDOW ; 
+	filter_inputs[i][j] = 0 ; 
+      } 
+    file_inputs << endl ;
+  }
 }
 
 void get_m1_phase() { 
@@ -627,17 +632,18 @@ void get_m1_phase() {
     yCord = 0 ; 
     
     for(unsigned long j=cum_n_per_pop[i_pop]; j < cum_n_per_pop[i_pop+1]; j++) {
-      xCord += filter_rates[j] * cos(2.0 * j * dPhi) * DT / TIME_WINDOW ; 
-      yCord += filter_rates[j] * sin(2.0 * j * dPhi) * DT / TIME_WINDOW ; 
+      xCord += filter_rates[j] * cos(2.0 * j * dPhi) * 1000. / TIME_WINDOW ; 
+      yCord += filter_rates[j] * sin(2.0 * j * dPhi) * 1000. / TIME_WINDOW ; 
     }
     
     m1[i_pop] = ( 2.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
     phase[i_pop] = 0.5 * atan2(yCord, xCord) ; 
     
-    if(phase[i] < 0)
-      phase[i] = phase[i] + M_PI ;
+    if(phase[i_pop] < 0)
+      phase[i_pop] = phase[i_pop] + M_PI ;
     
-    phase[i] *= 180.0/M_PI ; 
+    phase[i_pop] *= 180.0/M_PI ; 
+    phase[i_pop] *= 180.0/M_PI - 180. ; 
   }
 }
 

@@ -14,7 +14,7 @@ double print_PSP(int i_pop, int j_pop) {
 void open_lif_files() {
   string str_volt = path + "/mem_volt.dat" ;
   file_volt.open(str_volt.c_str(), ios::out | ios::ate); 
-
+  
   string str_spike_times = path + "/spike_times.dat" ; 
   file_spike_times.open(str_spike_times.c_str(), ios::out | ios::ate);   
 }
@@ -137,6 +137,10 @@ void scale_ext_inputs() {
     cout << "raw " << ext_inputs[i] << " scaled " << ext_inputs_scaled[i] << " " ; 
   } 
   cout << endl ; 
+  
+  if(SIGMA_FF>0.0) 
+    for(i=0;i<n_pop;i++) // presynaptic population b 
+      var_ff[i] = sqrt( ext_inputs_scaled[i] * sigma_FF[i] / sqrt_Ka[0] ) ; 
   
   for(i=0; i<n_neurons; i++) 
     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; 
@@ -303,7 +307,7 @@ void update_postsyn_currents() {
     if(IF_STP && stp_synapse[pre_pop + post_pop * n_pop]) 
       J_dum *= A_u_x_stp[i_neuron] ; 
     if(IF_RK2) 
-      J_dum *= exp(-(ISI[i_neuron])/TAU_SYN[pre_pop + post_pop * n_pop]) ; 
+      J_dum *= exp(-(ISI)/TAU_SYN[pre_pop + post_pop * n_pop]) ; 
     inputs[pre_pop][id_post[j]] += J_dum ; 
   }
   
@@ -320,7 +324,7 @@ void update_postsyn_currents_nmda() {
       if(IF_STP && stp_synapse[pre_pop + post_pop * n_pop]) 
 	J_dum *= A_u_x_stp[i_neuron] ; 
       if(IF_RK2) 
-	J_dum *= exp(-(ISI[i_neuron])/TAU_NMDA[pre_pop+post_pop*n_pop]) ; 
+	J_dum *= exp(-(ISI)/TAU_NMDA[pre_pop+post_pop*n_pop]) ; 
       inputs_nmda[pre_pop][id_post[j]] += J_dum ; 
     } 
 } 
@@ -330,10 +334,10 @@ void update_net_inputs() {
   for(i=0;i<n_neurons;i++) 
     net_inputs[i] = ff_inputs[i] ;
   
-  if(SIGMA_FF>0)
+  if(SIGMA_FF>0.0) 
     for(i=0;i<n_neurons;i++) 
-      /* net_inputs[i] += sqrt(ext_inputs_scaled[which_pop[i]] * SIGMA_FF / sqrt_Ka[which_pop[i]]) * white_noise(rand_gen) ;  */
-      net_inputs[i] += sqrt(SIGMA_FF) * white_noise(rand_gen) ; 
+      net_inputs[i] += var_ff[which_pop[i]] * white_noise(rand_gen) ; 
+  /* net_inputs[i] += sqrt(SIGMA_FF) * white_noise(rand_gen) ;  */
   
   /* if(IF_POISSON_FF) { */
   /*   net_inputs[i] = 0.0 ;  */
@@ -352,15 +356,15 @@ void update_net_inputs() {
       net_inputs[j] += inputs[i][j] ; // must be before decay 
       if(IF_SYN_DYN) inputs[i][j] *= EXP_DT_TAU_SYN[i+post_pop*n_pop] ;
       
-      if(IF_RK2) net_inputs_RK2[j] += inputs[i][j] * EXP_DT_TAU_SYN[i+post_pop*n_pop] ; 
-      filter_inputs[i][j] += inputs[i][j] ; 
+      if(IF_RK2) net_inputs_RK2[j] += inputs[i][j] * EXP_DT_TAU_SYN[i+post_pop*n_pop] ;      
+      if(REC_INPUTS) filter_inputs[i][j] += inputs[i][j] ; 
       
       if(IF_NMDA) { 
 	net_inputs[j] += inputs_nmda[i][j] ; // must be before decay 
 	inputs_nmda[i][j] *= EXP_DT_TAU_NMDA[i+post_pop*n_pop] ; 
 	
 	if(IF_RK2) net_inputs_RK2[j] += inputs_nmda[i][j] * EXP_DT_TAU_NMDA[i+post_pop*n_pop] ; 
-	filter_inputs[i][j] += inputs_nmda[i][j] ; 
+	if(REC_INPUTS) filter_inputs[i][j] += inputs_nmda[i][j] ; 
       }      
       if(!IF_SYN_DYN) inputs[i][j] = 0.0 ; // delta synapses 
     } 
@@ -415,7 +419,7 @@ void initial_conditions() {
       
   /*     t_spike[i_neuron] = t_time ; */
   /*     volt[i_neuron] = Vr ;  */
-  /*     ISI[i_neuron] = t_time - t_spike[i_neuron] ;  */
+  /*     ISI = t_time - t_spike[i_neuron] ;  */
       
   /*     /\* if(IF_LOW_RANK) *\/ */
   /*     /\* 	update_postsyn_currents_LR() ; *\/ */
@@ -428,7 +432,7 @@ void initial_conditions() {
   /*     if(IF_STP) */
   /*     	update_stp_variables_lif() ; */
 
-  /*     ISI[i_neuron] = 0.0 ; */
+  /*     ISI = 0.0 ; */
       
   /*   } //endif spike */
   /*   else */
@@ -486,12 +490,12 @@ void initial_conditions() {
   /* 	if(IF_RK2) { */
   /* 	  /\* t_spike[i_neuron] = t_time + DT * (Vth-vold) / (volt[i_neuron]-vold) ;  *\/ */
   /* 	  t_spike[i_neuron] = t_time + DT * (Vth-volt[i_neuron]) / (volt[i_neuron]-vold) ;  */
-  /* 	  ISI[i_neuron] = t_time - t_spike[i_neuron] ;  */
+  /* 	  ISI = t_time - t_spike[i_neuron] ;  */
   /* 	  volt[i_neuron] = (volt[i_neuron]-Vth) */
   /* 	    * ( 1.0 + dt_over_tau_mem[pre_pop] * (vold-Vl) / (volt[i_neuron]-vold) ) + Vr ;  */
   /* 	}  */
   /* 	else {  */
-  /* 	  ISI[i_neuron] = t_time - t_spike[i_neuron] ; */
+  /* 	  ISI = t_time - t_spike[i_neuron] ; */
   /* 	  t_spike[i_neuron] = t_time ;	 */
   /* 	  volt[i_neuron] = Vr ; 	   */
   /* 	} */
@@ -560,7 +564,7 @@ void run_single_neuron() {
     
     if(volt[i_neuron]>=Vth) { // if spike 
       
-      ISI[i_neuron] = t_time - t_spike[i_neuron] ; 
+      ISI = t_time - t_spike[i_neuron] ; 
       t_spike[i_neuron] = t_time ; 
       volt[i_neuron] = Vr ; 
       
@@ -657,11 +661,11 @@ void run_sim_lif() {
 	if(IF_RK2) { 
 	  /* t_spike[i_neuron] = t_time + DT * (Vth-vold) / (volt[i_neuron]-vold) ;  this is what meunier wrote */ 
 	  t_spike[i_neuron] = t_time + DT * (Vth-volt[i_neuron]) / (volt[i_neuron]-vold) ; // this is what hansel is using
-	  ISI[i_neuron] = t_time - t_spike[i_neuron] ; 
+	  ISI = t_time - t_spike[i_neuron] ; 
 	  volt[i_neuron] = (volt[i_neuron]-Vth) * (one_plus_dt_over_tau_mem[pre_pop] * (vold-Vl) /(volt[i_neuron]-vold) ) + Vl ; 
 	}
 	else { 
-	  ISI[i_neuron] = t_time - t_spike[i_neuron] ; 
+	  ISI = t_time - t_spike[i_neuron] ; 
 	  t_spike[i_neuron] = t_time ; 
 	  volt[i_neuron] = Vr ; 
 	}
