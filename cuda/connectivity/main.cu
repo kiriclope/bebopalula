@@ -3,6 +3,7 @@
 #include "CudaFunc.cu"
 
 #include "globals.h"
+
 #include "cuda_globals.h"
 
 #include "utils.h"

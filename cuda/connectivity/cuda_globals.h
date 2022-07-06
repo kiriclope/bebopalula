@@ -5,7 +5,6 @@
 #define maxMem (unsigned long) 12079136768 
 
 cudaDeviceProp prop ; 
-__device__ curandState dev_states[N_NEURONS] ; 
 
 /* #define N_THREADS 512 // 512 (default), 256 threads per block for high occupancy  */
 #define N_THREADS 1024 
@@ -15,6 +14,8 @@ __device__ curandState dev_states[N_NEURONS] ;
 #define N_NEURONS_PER_CHUNCK (unsigned long) 10000 
 #define N_CHUNCKS N_NEURONS / N_NEURONS_PER_CHUNCK // otherwise memory problem if N_NEURONS > 20000 because of array[CHUNCK_SIZE] too large
 #define CHUNCK_SIZE N_NEURONS * N_NEURONS_PER_CHUNCK 
+
+__device__ curandState dev_states[N_NEURONS_PER_CHUNCK] ;
 
 __device__ int dev_i_chunck ; 
 __device__ unsigned long long dev_total_n_post=0 ; 

@@ -1,30 +1,40 @@
 #ifndef __CUDA_UTILS__
 #define __CUDA_UTILS__
 
+__device__ uint wang_hash(uint seed) {
+  seed = (seed ^ 61) ^ (seed >> 16);
+  seed *= 9;
+  seed = seed ^ (seed >> 4);
+  seed *= 0x27d4eb2d;
+  seed = seed ^ (seed >> 15);
+  return seed;
+}
+
 __global__ void setup_kernel() { 
   unsigned long id = threadIdx.x + blockIdx.x * blockDim.x ; 
-  unsigned long i_neuron = (unsigned long) ( id + dev_i_chunck * N_NEURONS_PER_CHUNCK ) ;
-  /* Each thread gets different seed, a different sequence number, no offset */ 
-  /* if(id < N_NEURONS_PER_CHUNCK) */
-  /*   curand_init(clock64(), id, 0, &dev_states[id]) ; */
-  if(id < N_NEURONS_PER_CHUNCK & i_neuron < N_NEURONS) 
-    curand_init(clock64(), id, 0, &dev_states[i_neuron]) ; 
+  /* unsigned long i_neuron = (unsigned long) ( id + dev_i_chunck * N_NEURONS_PER_CHUNCK ) ; */
+  /* Each thread gets different seed, a different sequence number, no offset */
+  
+  if(id < N_NEURONS_PER_CHUNCK) 
+    curand_init( wang_hash( (unsigned int) clock64()), id, 0, &dev_states[id]) ; 
   
   /* if(id<2) {  */
-  /*   cuPrintf("currand init: ") ;  */
-  /*   cuPrintf("%d", dev_states[id]) ;  */
+  /*   cuPrintf("currand init: ") ;  */ 
+  /*   cuPrintf("%d", dev_states[id]) ;  */ 
   /* }   */
 }
 
-__device__ double unif_dist(unsigned long i_neuron) { 
+__device__ double unif_dist(unsigned long id) { 
   /*RETURNS ONE SAMPLE FROM UNIFORM DISTRIBUTION*/ 
   double randNumber= 0.0 ; 
-  if(i_neuron < N_NEURONS) { 
+  
+  if(id < N_NEURONS_PER_CHUNCK) { 
     /* save state in local memory for efficiency */ 
-    curandState localState = dev_states[i_neuron] ;
+    curandState localState = dev_states[id] ; 
     randNumber = curand_uniform(&localState) ; 
-    dev_states[i_neuron] = localState ; 
+    dev_states[id] = localState ; 
   } 
+  
   return randNumber ; 
 }
 
@@ -51,7 +61,7 @@ __global__ void kernel_gen_con_prob() {
   unsigned long i_neuron = (unsigned long) ( id + dev_i_chunck * N_NEURONS_PER_CHUNCK ) ; 
 
   double kappa = 2.0 * KAPPA_E ; 
-
+  
   DEV_IF_STRUCTURE = IF_SPEC || IF_RING ; 
   
   init_dev_theta() ; 
@@ -62,17 +72,18 @@ __global__ void kernel_gen_con_prob() {
   if(id < N_NEURONS_PER_CHUNCK & i_neuron < N_NEURONS) {     
     dev_pre_pop = dev_which_pop[i_neuron] ; 
 
-    if(dev_pre_pop==1) 
-	kappa = 2.0 * KAPPA_I ; 
-        
-    for(unsigned long i=0; i<N_NEURONS; i++) { // id (pre) -> i (post)       
+    if(dev_pre_pop==1)
+      kappa = 2.0 * KAPPA_I ; 
+      
+    for(unsigned long i=0; i<N_NEURONS; i++) { // id (pre) -> i (post)
+      
       dev_post_pop = dev_which_pop[i] ; 
       /* dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] = dev_K_over_Na[dev_pre_pop] ; */
       dev_con_prob_chunck[i + id * N_NEURONS] = dev_K_over_Na[dev_pre_pop] ;
       
       if(DEV_IF_STRUCTURE)
 	if(DEV_IS_STRUCT_SYN[dev_pre_pop + dev_post_pop * n_pop]) 
-	  /* dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] *= ( 1.0 + kappa * cos( dev_theta[i_neuron] - dev_theta[i] ) ) ; */
+	  /* dev_con_prob_chunck[id + i * N_NEURONS_PER_CHUNCK ] *= ( 1.0 + kappa * cos( dev_theta[i_neuron] - dev_theta[i] ) ) ; */ 
 	  dev_con_prob_chunck[i + id * N_NEURONS] *= ( 1.0 + kappa * cos( dev_theta[i_neuron] - dev_theta[i] ) ) ; 
       
     } 
