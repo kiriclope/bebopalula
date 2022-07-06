@@ -35,13 +35,16 @@ if gv.folder.find('off')!=-1 or gv.folder.find('on')!=-1:
 
 fig = plt.figure(figtitle, figsize=(1.618*2*1.5*3, 1.618*2)) 
 
-BL_rates = np.nanmean(rates[0:4], axis=0) # over time 
-stim_rates = np.nanmean(rates[8:12], axis=0) # over time 
-delay_rates = np.nanmean(rates[12:16], axis=0) # over time
+
+BL_rates = np.nanmean(rates[0:int(2/gv.T_WINDOW)-2], axis=0) # over time 
+stim_rates = np.nanmean(rates[int(2/gv.T_WINDOW):int(3/gv.T_WINDOW)-2], axis=0) # over time 
+delay_rates = np.nanmean(rates[int(3/gv.T_WINDOW):int(5/gv.T_WINDOW)-2], axis=0) # over time
+
+print('m1', m1[0, int(2/(gv.T_WINDOW)-2)])
 
 i_pop=0
 theta = np.linspace(-180, 180, gv.n_size[i_pop]) 
-    
+
 ax = fig.add_subplot(1,3,1) 
 
 pop_rates = BL_rates[i_pop] 

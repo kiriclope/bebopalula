@@ -55,6 +55,7 @@ for i_pop in range(gv.n_pop) :
 
 plt.xlabel('Time (s)') 
 plt.ylabel('Rel. Bump Amplitude (Hz)')
+plt.xlim([0, 10]) 
 add_vlines()
 
 ax = plt.subplot(gv.RANK,3,3) 

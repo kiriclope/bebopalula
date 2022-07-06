@@ -30,6 +30,17 @@ print('spike_times', spike_times.shape, spike_times[500:505])
 #     ISI = spike_times[idx_neuron][1:] - spike_times[idx_neuron][:-1]
 #     CV[i_neuron] = np.std(ISI) / np.mean(ISI) 
 
+def parloop_FF(spike_times, neurons_id, i_neuron): 
+
+    try:
+        idx_neuron = np.where(neurons_id==i_neuron) 
+        ISI = spike_times[idx_neuron][1:] - spike_times[idx_neuron][:-1] 
+        CV = np.std(ISI) / np.mean(ISI) 
+    except:
+        CV = np.nan
+        
+    return CV 
+
 def parloop_CV(spike_times, neurons_id, i_neuron): 
 
     try:

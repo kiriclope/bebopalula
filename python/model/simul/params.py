@@ -19,6 +19,8 @@ folder = 'albert_on'
 # folder = 'christos_on' # bifurcation for N4K2 n_frac 0.8 no STP 
 m0 = .001 
 nu0 = .05 
+global T_WINDOW
+T_WINDOW = .05
 
 global IF_LOOP_J0 
 IF_LOOP_J0 = 0 
@@ -71,14 +73,15 @@ TAU_FAC = 450
 TAU_REC = 200 
 USE = .03 
 
-global IF_TRIALS, TRIAL_ID 
-IF_TRIALS = 0 
-TRIAL_ID = 0 
+global IF_TRIALS, TRIAL_ID, N_TRIALS
+IF_TRIALS = 0
+TRIAL_ID = 1 
 N_TRIALS = 10
 
-global IF_INI_COND, INI_COND_ID 
+global IF_INI_COND, INI_COND_ID, N_INI
 IF_INI_COND = 0 
-INI_COND_ID = 0 
+INI_COND_ID = 1 
+N_INI = 10
 
 global IF_HYSTERESIS, HYST_JEE, HYST_M0 
 IF_HYSTERESIS = 0 
@@ -100,11 +103,11 @@ global A_CUE, EPS_CUE, A_DIST, EPS_DIST, PHI_CUE, PHI_DIST
 PHI_CUE = 0.25
 PHI_DIST = 1-PHI_CUE 
 
-A_CUE = 1.
+A_CUE = 1.0 
 EPS_CUE = 0.2
 
-A_DIST = 1.
-EPS_DIST = EPS_CUE
+A_DIST = 0.0
+EPS_DIST = 0.2 # EPS_CUE
 
 global T_SAMPLE_ON, T_SAMPLE_OFF
 T_SAMPLE_ON = 2
@@ -138,7 +141,7 @@ global pal
 if folder.find('on')!=-1:
     pal = ['r', 'b']
 else:
-    pal = [sns.color_palette('colorblind')[3],
+    pal = [sns.color_palette('colorblind')[2],
            sns.color_palette('colorblind')[0],
            sns.color_palette('colorblind')[1],
            sns.color_palette('colorblind')[3]
