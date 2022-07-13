@@ -17,7 +17,7 @@ importlib.reload(sys.modules['get_m1'])
 gv.IF_INI_COND = 0
 gv.IF_TRIALS = 0
 
-gv.N_INI = 10 
+gv.N_INI = 10
 gv.init_param()
 
 path = gv.path
@@ -38,8 +38,10 @@ def get_spike_count(path):
     
     spike_times = raw_spike_times[:,1] 
     print('spike_times', spike_times.shape, spike_times[500:505]) 
-    
-    neurons_id = neurons_id[spike_times<2000] # time in ms 
+
+    idx = np.logical_and(spike_times>0, spike_times<2000) 
+    # idx = np.logical_and(spike_times>3000, spike_times<5000)
+    neurons_id = neurons_id[idx] # time in ms 
     
     n_neurons = gv.n_neurons * 10000 
     
@@ -54,6 +56,7 @@ def get_fano_factor(path):
     for i_ini in range(1, gv.N_INI + 1):
         gv.path = path
         gv.path += '/ini_cond_%d' % i_ini ; 
+        # gv.path += '/trial_%d' % i_ini ; 
         print(gv.path)
         
         spike_count_inis.append(get_spike_count(gv.path)) 
@@ -70,6 +73,17 @@ def get_fano_factor(path):
     
     return fano_factor, spike_count_inis 
 
-# fano_off, spike_off = get_fano_factor(path)
+fano_off, spike_off = get_fano_factor(path)
 path = path.replace('off', 'on') # change dirname 
 fano_on, spike_on = get_fano_factor(path)
+
+figname = 'off_on_' + 'fano_factor_hist'
+
+plt.figure(figname)
+plt.hist(fano_off, histtype='step', color='b') 
+plt.hist(fano_on, histtype='step', color='r') 
+plt.xlabel('Fano Factor') 
+plt.ylabel('Count')
+
+plt.savefig(figname + '.svg', dpi=300)
+

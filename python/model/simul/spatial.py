@@ -35,7 +35,6 @@ if gv.folder.find('off')!=-1 or gv.folder.find('on')!=-1:
 
 fig = plt.figure(figtitle, figsize=(1.618*2*1.5*3, 1.618*2)) 
 
-
 BL_rates = np.nanmean(rates[0:int(2/gv.T_WINDOW)-2], axis=0) # over time 
 stim_rates = np.nanmean(rates[int(2/gv.T_WINDOW):int(3/gv.T_WINDOW)-2], axis=0) # over time 
 delay_rates = np.nanmean(rates[int(3/gv.T_WINDOW):int(5/gv.T_WINDOW)-2], axis=0) # over time
@@ -62,7 +61,7 @@ plt.title('Baseline')
 plt.xlabel('Prefered Location (°)')
 plt.xticks([-180, -90, 0, 90, 180])
 plt.ylabel('Rates (Hz)') 
-plt.ylim([0,40])
+plt.ylim([0,20])
 
 ax = fig.add_subplot(1,3,2) 
     
@@ -81,7 +80,7 @@ plt.title('Stimulation')
 plt.xlabel('Prefered Location (°)')
 plt.xticks([-180, -90, 0, 90, 180])
 plt.ylabel('Rates (Hz)') 
-plt.ylim([0,40])
+plt.ylim([0,20])
 
 ax = fig.add_subplot(1,3,3) 
     
@@ -99,5 +98,5 @@ plt.title('Delay')
 plt.xlabel('Prefered Location (°)')
 plt.xticks([-180, -90, 0, 90, 180])
 plt.ylabel('Rates (Hz)') 
-plt.ylim([0,40])
+plt.ylim([0,20])
 plt.show()

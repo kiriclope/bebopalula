@@ -75,7 +75,7 @@ ax = fig.add_subplot(2,2,3)
 
 BL_rates = np.mean(np.nanmean(rates[0:8], axis=0), axis=-1) # over time
 
-avg_rates = np.nanmean(rates[12:20], axis=0) # over time 
+avg_rates = np.nanmean(rates[int(4/gv.T_WINDOW):int(5/gv.T_WINDOW)], axis=0) # over time 
 for i_pop in range(gv.n_pop-1): 
     
     pop_rates = avg_rates[i_pop] 

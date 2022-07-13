@@ -53,8 +53,8 @@ for i_pop in range(gv.n_pop):
    
 plt.xlabel('Time (ms)') 
 plt.ylabel('Rates (Hz)') 
-# plt.ylim([0, 30]) 
-# plt.xlim([0, 2]) 
+plt.ylim([0, 1]) 
+plt.xlim([0, 2]) 
 
 ax = fig.add_subplot(int('122')) 
 
