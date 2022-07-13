@@ -29,7 +29,7 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 #define TIME_INI (double) 0.000E3 // 1.00E3 // 10.E3 // 
 #define TIME_STEADY (double) 10.000E3 //  2.0E3 // 10.E3 //
 
-#define DURATION (double) 10.00E3 // 10.E3 // 
+#define DURATION (double) 30.00E3 // 10.E3 // 
 
 #define TIME_WINDOW (double) 0.0500E3 // 1.00E3 // 10.E3 // 
 #define TIME_REC (double) 30.00E3 // 1.00E3 // 10.E3 // 
@@ -55,10 +55,10 @@ const double Trate[2] = {10.0, 10.0} ;
 
 #define J0 -1.0 // for one population 
 #define I0 1.0 // for one population 
-#define Tsyn0 1.0 // for one population 
+#define Tsyn0 1.0 // for one population
 
-#define GAIN (double) 1.0 
-#define M0 (double) 0.001
+#define GAIN (double) 1.0
+#define M0 (double) 0.0015 
 
 // 0.05 if with 0.01 without stp 
 #define IF_LOOP_M0 0 
@@ -129,8 +129,8 @@ const double kappas[4] = {KAPPA, KAPPA*.5, KAPPA, KAPPA*.5} ;
 #define DEG_TO_RAD (double) M_PI/180.0 
 const double SIGMA[4] = {60.0, 60.0, 70.0, 60.0} ; 
 
-#define SIGMA_FF 0.25
-const double sigma_FF[2] = {SIGMA_FF, SIGMA_FF} ; 
+#define SIGMA_FF 10.0 
+const double sigma_FF[2] = {SIGMA_FF, 0.0} ; 
  
 double var_ff[2] = {0.0, 0.0} ; 
 #define IF_POISSON_FF 0 
@@ -233,7 +233,7 @@ const double A_STEP[2] = {1.55, 1.25} ;
 #define IF_CON_DIR 0
 #define CUE (double) 1.0
 
-#define IF_CHRISTOS 1 
+#define IF_CHRISTOS 1
 #define T_CUE_ON (double) 2000 
 #define T_CUE_OFF (double) 3000 
 
@@ -241,7 +241,7 @@ const double A_STEP[2] = {1.55, 1.25} ;
 #define T_ERASE_OFF (double) 6000 
 
 #define PHI_CUE (double) .25 
-const double A_CUE[2] = {1.0, 0.0} ; // {2.4, 1.0} 
+const double A_CUE[2] = {0.5, 0.0} ; // {2.4, 1.0} 
 const double EPS_CUE[2] =  {0.2, 0.0} ; // {.17 , 0.0} 
 
 #define IF_DIST 0 

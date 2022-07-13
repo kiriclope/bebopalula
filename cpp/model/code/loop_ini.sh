@@ -86,9 +86,9 @@ for ini in $(seq 1 1 $n_ini); do
     
     screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_ini_${ini}_off_far ./${temp_out}_${ini}.out $n_pop $N $K ${dir}_off 
     
-    sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.5 /" "$temp_globals" ; 
+    # sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.5 /" "$temp_globals" ; 
     
-    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${ini}.out -lgsl -lgslcblas 
+    # g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${ini}.out -lgsl -lgslcblas 
     
     screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_ini_${ini}_on_far ./${temp_out}_${ini}.out $n_pop $N $K ${dir}_on 
     

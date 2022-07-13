@@ -632,8 +632,8 @@ void get_m1_phase() {
     yCord = 0 ; 
     
     for(unsigned long j=cum_n_per_pop[i_pop]; j < cum_n_per_pop[i_pop+1]; j++) {
-      xCord += filter_rates[j] * cos(2.0 * j * dPhi) * 1000. / TIME_WINDOW ; 
-      yCord += filter_rates[j] * sin(2.0 * j * dPhi) * 1000. / TIME_WINDOW ; 
+      xCord += filter_rates[j] * cos(2.0 * j * dPhi) / TIME_WINDOW * 1000.0 ; 
+      yCord += filter_rates[j] * sin(2.0 * j * dPhi) / TIME_WINDOW * 1000.0 ; 
     }
     
     m1[i_pop] = ( 2.0 / (double) n_per_pop[i_pop]) * sqrt(xCord * xCord + yCord * yCord) ; 
@@ -642,7 +642,7 @@ void get_m1_phase() {
     if(phase[i_pop] < 0)
       phase[i_pop] = phase[i_pop] + M_PI ;
     
-    phase[i_pop] *= 180.0/M_PI ; 
+    // phase[i_pop] *= 180.0/M_PI ; 
     phase[i_pop] *= 180.0/M_PI - 180. ; 
   }
 }

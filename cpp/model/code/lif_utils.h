@@ -132,7 +132,7 @@ void scale_ext_inputs() {
   cout << "sqrt(K) " << sqrt_K << endl ; 
   cout << "Scaling ext_inputs ... " << endl ;  
   for(i=0;i<n_pop;i++) { // postsynaptic
-    ext_inputs_scaled[i] = GAIN * ext_inputs[i] * sqrt_Ka[0] * m0 ; 
+    ext_inputs_scaled[i] = ext_inputs[i] * sqrt_Ka[0] * m0 ; 
     if(IF_RESCALE) ext_inputs_scaled[i] *= (Vth-Vr) ; 
     cout << "raw " << ext_inputs[i] << " scaled " << ext_inputs_scaled[i] << " " ; 
   } 
@@ -140,7 +140,7 @@ void scale_ext_inputs() {
   
   if(SIGMA_FF>0.0) 
     for(i=0;i<n_pop;i++) // presynaptic population b 
-      var_ff[i] = sqrt( ext_inputs_scaled[i] * sigma_FF[i] / sqrt_Ka[0] ) ; 
+      var_ff[i] = sqrt_Ka[i] * sqrt( sigma_FF[i] ) ; 
   
   for(i=0; i<n_neurons; i++) 
     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; 
@@ -466,73 +466,73 @@ void initial_conditions() {
   
   /* if(IF_RING)  */
   /*   ff_inputs[i] = ext_inputs_scaled[0] * 1.0 + ( kappa_ini * cos( theta[i] + phi_ini) ) ;  */
+
+  /* for(i=0;i<n_per_pop[0]; i++) */
+  /*   ff_inputs[i] = ext_inputs_scaled[0] * 1.15 ;  */
   
   /* for(t_time=0.; t_time<TIME_INI; t_time+=DT) { */
     
-  /*   /\* if(t_time>=TIME_INI/2.0)  */
-  /*   /\*   if(kappa_ini>0) *\/  */
-  /*   /\* 	kappa_ini -= kappa_ini_0 * 2.0 * (DT/TIME_INI) ; *\/  */
+  /*   /\* if(t_time>=TIME_INI/2.0) */
+  /*   /\*   if(kappa_ini>0) *\/ */
+  /*   /\* 	kappa_ini -= kappa_ini_0 * 2.0 * (DT/TIME_INI) ; *\/ */
     
   /*   /\* cout << "time " << fixed << setprecision(3) << t_time ; *\/ */
   /*   /\* cout << " kappa_ini " << fixed << setprecision(3) << kappa_ini << "\r" ;  *\/ */
-
-  /*   for(i=0;i<n_per_pop[0]; i++)  */
-  /*     ff_inputs[i] = ext_inputs_scaled[0] * ( 1.0 + sqrt(sigma_ini) * white_noise(rand_gen) ) ;  */
     
-  /*   for(i_neuron=0; i_neuron<n_neurons; i_neuron++) {  */
+  /*   for(i_neuron=0; i_neuron<n_neurons; i_neuron++) { */
       
-  /*     pre_pop = which_pop[i_neuron] ;  */
-  /*     vold = volt[i] ;  */
+  /*     pre_pop = which_pop[i_neuron] ; */
+  /*     vold = volt[i] ; */
       
-  /*     integrate_mem_volt() ;  */
+  /*     integrate_mem_volt() ; */
       
-  /*     if(volt[i_neuron]>=Vth) { // if spike		 */
+  /*     if(volt[i_neuron]>=Vth) { // if spike */
   /* 	if(IF_RK2) { */
   /* 	  /\* t_spike[i_neuron] = t_time + DT * (Vth-vold) / (volt[i_neuron]-vold) ;  *\/ */
-  /* 	  t_spike[i_neuron] = t_time + DT * (Vth-volt[i_neuron]) / (volt[i_neuron]-vold) ;  */
-  /* 	  ISI = t_time - t_spike[i_neuron] ;  */
-  /* 	  volt[i_neuron] = (volt[i_neuron]-Vth) */
-  /* 	    * ( 1.0 + dt_over_tau_mem[pre_pop] * (vold-Vl) / (volt[i_neuron]-vold) ) + Vr ;  */
-  /* 	}  */
-  /* 	else {  */
+  /* 	  t_spike[i_neuron] = t_time + DT * (Vth-volt[i_neuron]) / (volt[i_neuron]-vold) ; */
   /* 	  ISI = t_time - t_spike[i_neuron] ; */
-  /* 	  t_spike[i_neuron] = t_time ;	 */
-  /* 	  volt[i_neuron] = Vr ; 	   */
+  /* 	  volt[i_neuron] = (volt[i_neuron]-Vth) */
+  /* 	    * ( 1.0 + dt_over_tau_mem[pre_pop] * (vold-Vl) / (volt[i_neuron]-vold) ) + Vr ; */
+  /* 	} */
+  /* 	else { */
+  /* 	  ISI = t_time - t_spike[i_neuron] ; */
+  /* 	  t_spike[i_neuron] = t_time ; */
+  /* 	  volt[i_neuron] = Vr ; */
   /* 	} */
 	
-  /* 	if(IF_STP)  */
-  /* 	  update_stp_variables_lif() ;  */
+  /* 	if(IF_STP) */
+  /* 	  update_stp_variables_lif() ; */
 	
   /* 	/\* if(IF_LOW_RANK)  *\/ */
   /* 	/\*   update_postsyn_currents_LR() ;  *\/ */
-  /* 	/\* else  *\/	 */
-  /* 	update_postsyn_currents() ;  */
-  /* 	if(IF_NMDA)  */
-  /* 	  update_postsyn_currents_nmda() ;  */
+  /* 	/\* else  *\/ */
+  /* 	update_postsyn_currents() ; */
+  /* 	if(IF_NMDA) */
+  /* 	  update_postsyn_currents_nmda() ; */
 		
-  /*     } //endif spike  */
+  /*     } //endif spike */
   /*     /\* else *\/ */
   /*     /\* 	release_stp() ; *\/ */
       
   /*   } //endfor neurons */
     
-  /*   update_net_inputs() ;  */
+  /*   update_net_inputs() ; */
     
   /* } //endfor time */
   
   /* if(IF_TUNED_FF) */
-  /*   for(i=0; i<n_neurons; i++)  */
-  /*     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * ( 1.0 +  KAPPA_EXT/sqrt_Ka[0] * cos( theta[i] - PHI_EXT ) ) ;  */
-  /* else  */
-  /*   for(i=0;i<n_per_pop[0]; i++)  */
-  /*     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ;  */
+  /*   for(i=0; i<n_neurons; i++) */
+  /*     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] * ( 1.0 +  KAPPA_EXT/sqrt_Ka[0] * cos( theta[i] - PHI_EXT ) ) ; */
+  /* else */
+  /*   for(i=0;i<n_per_pop[0]; i++) */
+  /*     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; */
   
-  /* for(i_neuron=0; i_neuron<n_neurons; i_neuron++)  */
-  /*   t_spike[i_neuron] -= TIME_INI ;  */
+  /* for(i_neuron=0; i_neuron<n_neurons; i_neuron++) */
+  /*   t_spike[i_neuron] -= TIME_INI ; */
   
-  /* cout << endl ;  */
+  /* cout << endl ; */
   
-  /* cout << "kappa_ini " << kappa_ini << " phi ini " << phi_ini << endl ; */
+  /* /\* cout << "kappa_ini " << kappa_ini << " phi ini " << phi_ini << endl ; *\/ */
   
 }
 
@@ -551,7 +551,7 @@ void run_single_neuron() {
   i_neuron = 0 ;
 
   double sigma_ext = 10.0 * unif(rand_gen) ; 
-    
+  
   for(t_time=0.; t_time<=duration; t_time+=DT) { 
     
     ff_inputs[i_neuron] = 0.25 * ext_inputs_scaled[i_neuron] * ( 1.0 + sqrt(sigma_ext) * white_noise(rand_gen) ) ; 
@@ -573,8 +573,8 @@ void run_single_neuron() {
 	filter_rates[i_neuron] += 1.0 ; 
 	
 	if(t_time<time_rec_spikes) // save spike times 
-	  file_spike_times << fixed << setprecision(1) << (float) (i_neuron) 
-			   << " " << (float) (t_spike[i_neuron]-time_steady) << endl ; 
+	  file_spike_times << fixed << setprecision(2) << i_neuron
+			   << " " << t_spike[i_neuron]-time_steady << endl ; 
       } 
       
       if(IF_STP) 

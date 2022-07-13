@@ -21,12 +21,12 @@ FIX_MAP_SEED=1
 IF_LOW_RANK=0 
 FIX_KSI_SEED=1 
 
-sed -ie "s/ DURATION .*/ DURATION (double) 10E3 /" "$temp_globals" ; 
+sed -ie "s/ DURATION .*/ DURATION (double) 8E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_INI .*/ TIME_INI (double) 0E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 10E3 /" "$temp_globals" ; 
-sed -ie "s/ TIME_WINDOW .*/ TIME_WINDOW (double) .250E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_WINDOW .*/ TIME_WINDOW (double) .050E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_REC .*/ TIME_REC (double) 60E3 /" "$temp_globals" ; 
-sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 10E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 0E3 /" "$temp_globals" ; 
 
 sed -ie "s/ IF_LIF .*/ IF_LIF ${IF_LIF} /" "$temp_globals" ; 
 sed -ie "s/ IF_BIN .*/ IF_BIN ${IF_BIN} /" "$temp_globals" ; 
@@ -155,15 +155,15 @@ for trial in $(seq 1 1 $n_trials); do
     sed -ie "s/ PHI_CUE (double) .*/ PHI_CUE (double) .25 /" "$temp_globals" ; 
     sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) .75 /" "$temp_globals" ;
 
-    sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 1.0 /" "$temp_globals" ; 
+    sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.0 /" "$temp_globals" ; 
     
     g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
     
     screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
     
-    sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.5 /" "$temp_globals" ; 
-
-    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
+    # sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.0 /" "$temp_globals" ; 
+    
+    # g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
     
     screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
     # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
