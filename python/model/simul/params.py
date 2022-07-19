@@ -11,10 +11,10 @@ global n_pop, n_neurons, K, m0, folder, model
 # model = 'binary' 
 model = 'lif' 
 n_pop = 2
-n_neurons = 6 
+n_neurons = 4
 K = 4000
 # folder='shrisha'
-folder = 'bump_on' 
+folder = 'Jee_off' 
 # folder = 'christos_Ie_840.00_Jee_800.00' # bifurcation for N4K2 n_frac 0.8 no STP 
 # folder = 'christos_on' # bifurcation for N4K2 n_frac 0.8 no STP 
 m0 = .001 
@@ -74,13 +74,13 @@ TAU_REC = 200
 USE = .03 
 
 global IF_TRIALS, TRIAL_ID, N_TRIALS
-IF_TRIALS = 0
+IF_TRIALS = 0 
 TRIAL_ID = 1 
 N_TRIALS = 10
 
 global IF_INI_COND, INI_COND_ID, N_INI
 IF_INI_COND = 0 
-INI_COND_ID = 0 
+INI_COND_ID = 1 
 N_INI = 10
 
 global IF_HYSTERESIS, HYST_JEE, HYST_M0 
@@ -100,7 +100,7 @@ KAPPA_EXT = 1.0
 PHI_EXT = 0.375
 
 global A_CUE, EPS_CUE, A_DIST, EPS_DIST, PHI_CUE, PHI_DIST
-PHI_CUE = 0.25
+PHI_CUE = 0.250 
 PHI_DIST = 1-PHI_CUE 
 
 A_CUE = 0.5 

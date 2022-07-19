@@ -38,44 +38,61 @@ if gv.folder.find('off')!=-1 or gv.folder.find('on')!=-1:
     
 fig = plt.figure(figtitle, figsize=(1.618*2*1.5*3, 1.618*2*gv.RANK)) 
 
+# ax = plt.subplot(gv.RANK,4,1)
+
+# for i_pop in range(gv.n_pop) : 
+#     plt.plot(time, m0[i_pop], '-', color=gv.pal[i_pop], alpha=alpha[i_pop]) 
+
+# plt.xlabel('Time (s)') 
+# plt.ylabel('Rates (Hz)')
+# plt.xlim([0, 10]) 
+# add_vlines()
+
 ax = plt.subplot(gv.RANK,3,1)
 
-for i_pop in range(gv.n_pop) : 
+for i_pop in range(gv.n_pop-1) : 
     plt.plot(time, m1[i_pop], '-', color=gv.pal[i_pop], alpha=alpha[i_pop]) 
 
 plt.xlabel('Time (s)') 
 plt.ylabel('Bump Amplitude (Hz)')
-# plt.xlim([0, 10]) 
+# plt.xlim([0, 8]) 
 add_vlines()
 
 ax = plt.subplot(gv.RANK,3,2)
 
-for i_pop in range(gv.n_pop) : 
+for i_pop in range(gv.n_pop-1) : 
     plt.plot(time, m1[i_pop] / m0[i_pop], '-', color=gv.pal[i_pop], alpha=alpha[i_pop]) 
 
 plt.xlabel('Time (s)') 
 plt.ylabel('Rel. Bump Amplitude (Hz)')
-# plt.xlim([0, 10]) 
+# plt.xlim([0, 8]) 
+plt.ylim([0, 1]) 
 add_vlines()
 
 ax = plt.subplot(gv.RANK,3,3) 
 
-for i_pop in range(gv.n_pop) :
+for i_pop in range(gv.n_pop-1) :
+    # plt.plot(time, 2*phi[i_pop]*180/np.pi - 2*((gv.PHI_CUE * 180) % 180), color=gv.pal[i_pop], alpha=alpha[i_pop])
     plt.plot(time, 2*phi[i_pop]*180/np.pi - 180, color=gv.pal[i_pop], alpha=alpha[i_pop]) 
     
     if(gv.IF_TRIALS and gv.IF_INI_COND):
-        plt.hlines( 2*( (gv.TRIAL_ID * 180 / gv.N_TRIALS) % 180) - 180, 0, 10, ls='--') 
-        plt.hlines( 2*( (180 - gv.TRIAL_ID * 180 / gv.N_TRIALS) % 180) - 180, 0, 10, color='b', ls='--') 
+        plt.hlines( 2*( (gv.TRIAL_ID * 180 / gv.N_TRIALS) % 180) - 180, 0, 8, ls='--') 
+        # plt.hlines( 2*( (180 - gv.TRIAL_ID * 180 / gv.N_TRIALS) % 180) - 180, 0, 8, color='b', ls='--') 
         print('phi', 2*np.mean(phi[i_pop, -4:]) * 180 / np.pi - 180, 'phi_trial', 2*(gv.TRIAL_ID * 180 / gv.N_TRIALS) % 180 - 180 ) 
     else:
-        plt.hlines( 2*((gv.PHI_CUE * 180) % 180) - 180, 0, 10, ls='--') 
-        plt.hlines( 2*((180-gv.PHI_CUE * 180) % 180) - 180, 0, 10, color='b', ls='--') 
+        plt.hlines( 2*((gv.PHI_CUE * 180) % 180) - 180, 0, 8, ls='--') 
+        # plt.hlines( 2*((180-gv.PHI_CUE * 180) % 180) - 180, 0, 8, color='b', ls='--') 
         print('phi', 2*np.mean(phi[i_pop, -4:]) * 180 / np.pi - 180, 'phi_ext', 2*( (gv.PHI_CUE * 180) % 180) - 180) 
-       
+
 plt.xlabel('Time (s)')
+# plt.xlim([0, 8]) 
 plt.ylabel('Bump Phase (°)')
 plt.ylim([-180, 180])
 plt.yticks([-180, -90, 0, 90, 180])
+# plt.ylabel('Drift (°)')
+# plt.xlim([0, 8]) 
+# plt.ylim([-30, 30])
+# plt.yticks([-30, -15, 0, 15, 30])
 add_vlines()
 
 # plt.yticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi],

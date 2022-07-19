@@ -31,17 +31,21 @@ if(gv.MAP==1):
     time, rates_perm =  get_time_rates(MAP=1, path=gv.path, con_path=gv.con_path) 
     m1, phi, smooth_rates = get_m1_phi_smooth_rates(rates_perm) 
 
-idx_phi_1 = np.where(phi[0]<=np.pi/2) 
-idx_phi_2 = np.where(phi[0]>np.pi/2)
 
-phi_1 = phi[0].copy()
-phi_1[idx_phi_2] *= np.nan 
+phi *= 2 * 180 / np.pi 
+phi -= 180
 
-# phi_1 = pd.Series(phi_1)
-# phi_1.fillna(method='ffill', limit=0)
+# idx_phi_1 = np.where(phi[0]<=np.pi/2) 
+# idx_phi_2 = np.where(phi[0]>np.pi/2)
 
-phi_2 = phi[0].copy()
-phi_2[idx_phi_1] *= np.nan 
+# phi_1 = phi[0].copy()
+# phi_1[idx_phi_2] *= np.nan 
+
+# # phi_1 = pd.Series(phi_1)
+# # phi_1.fillna(method='ffill', limit=0)
+
+# phi_2 = phi[0].copy()
+# phi_2[idx_phi_1] *= np.nan 
 # phi_2 = pd.Series(phi_2)
 # phi_2.fillna(method='ffill', limit=0)
     
@@ -68,16 +72,19 @@ else:
     figname = 'smooth_m1_phi_tasks_' + gv.folder + '_MAP_%d'  % gv.MAP 
     figtitle = 'DRT Go, MAP %d' % gv.MAP 
     
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(1.25*1.618*1.5*3, 1.618*1.5), num=figname) 
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(1.25*1.618*2*3, 1.618*2), num=figname) 
 
 # fig.suptitle(figtitle) 
-ax1.set(xlim=(0, np.pi), ylim=(0, np.ceil( np.nanmax(smooth_rates)*1.2 ) ) )
+ax1.set(xlim=(-180, 180), ylim=(0, np.ceil( np.nanmax(smooth_rates)*1.2 ) ) )
+# ax1.set(xlim=(0, np.pi), ylim=(0, np.ceil( np.nanmax(smooth_rates)*1.2 ) ) )
 # ax1.set(xlim=(0, np.pi), ylim=(0, 20 ) )
 
 if(gv.MAP==0): 
-    ax1.set_xlabel('$\\theta_0$ (rad)')
+    ax1.set_xlabel('Prefered Location (°)')
+    # ax1.set_xlabel('$\\theta_0$ (rad)')
     if(gv.model=='lif'):
-        ax1.set_ylabel('$\\nu(\\theta_0)$ (Hz)')
+        ax1.set_ylabel('Rates (Hz)')
+        # ax1.set_ylabel('$\\nu(\\theta_0)$ (Hz)')
     if(gv.model=='binary'):
         ax1.set_ylabel('$m(\\theta_0)$ (a.u.)')
         
@@ -88,8 +95,9 @@ if(gv.MAP==1):
     if(gv.model=='binary'):
         ax1.set_ylabel('$m(\\theta_1)$ (a.u.)')
 
-ax1.set_xticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi]) 
-ax1.set_xticklabels(['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$']) 
+# ax1.set_xticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi]) 
+# ax1.set_xticklabels(['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$']) 
+ax1.set_xticks([-180, -90, 0, 90, -180]) 
     
 ax2.set(xlim=(0, 14), ylim=(0, np.ceil( np.nanmax(m1) * 12 )/10 ) ) 
 ax2.set_xlabel('Time (s)')
@@ -97,7 +105,8 @@ ax2.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
 
 if(gv.MAP==0):
     if(gv.model=='lif'):
-        ax2.set_ylabel('$\\nu^{(1)}_0$ (Hz)') 
+        ax2.set_ylabel('Amplitude (Hz)')
+        # ax2.set_ylabel('$\\nu^{(1)}_0$ (Hz)') 
     if(gv.model=='binary'):    
         ax2.set_ylabel('$m^{(1)}_0$ (a.u.)')
     
@@ -106,11 +115,13 @@ if(gv.MAP==1):
     
 add_vlines_axis(ax2) 
 
-ax3.set(xlim=(0, 14), ylim=(0, np.pi)) 
+ax3.set(xlim=(0, 14), ylim=(-180, 180)) 
+# ax3.set(xlim=(0, 14), ylim=(0, np.pi)) 
 ax3.set_xlabel('Time (s)')
     
 if(gv.MAP==0):
-    ax3.set_ylabel('$\phi_0$ (rad)')
+    ax3.set_ylabel('Phase (°)')
+    # ax3.set_ylabel('$\phi_0$ (rad)')
 if(gv.MAP==1):
     ax3.set_ylabel('$\phi_1$ (rad)')
     
@@ -118,13 +129,17 @@ ax3.set_xticks([0, 2, 4, 6, 8, 10, 12, 14])
 # ax3.set_yticks([0, np.pi/2, np.pi, 3*np.pi/2, 2*np.pi]) 
 # ax3.set_yticklabels(['$0$', r'$\frac{\pi}{2}$', r'$\pi$', r'$\frac{3\pi}{2}$', r'$2 \pi$']) 
 
-ax3.set_yticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi]) 
-ax3.set_yticklabels(['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$']) 
+ax3.set_yticks([-180, -90, 0, 90, -180]) 
+# ax3.set_yticklabels(['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$']) 
+
+# ax3.set_yticks([0, np.pi/4, np.pi/2, 3*np.pi/4, np.pi]) 
+# ax3.set_yticklabels(['$0$', r'$\frac{\pi}{4}$', r'$\frac{\pi}{2}$', r'$\frac{3\pi}{4}$', r'$\pi$']) 
 
 add_vlines_axis(ax3)    
 
 for i_pop in range(gv.n_pop): 
-    theta = np.linspace(0, np.pi, gv.n_size[i_pop]) 
+    # theta = np.linspace(0, np.pi, gv.n_size[i_pop]) 
+    theta = np.linspace(-180, 180, gv.n_size[i_pop]) 
     if(i_pop==0):
         smooth_line_E = ax1.plot(theta, smooth_rates[i_pop, 0,:gv.n_size[i_pop]], '-', color=gv.pal[i_pop])[0]
     else:
@@ -146,12 +161,14 @@ for i_pop in range(gv.n_pop):
 # # function that draws each frame of the animation 
 def animate(i):
 
-    theta = np.linspace(0, np.pi, gv.n_size[0])
+    # theta = np.linspace(0, np.pi, gv.n_size[0])
+    theta = np.linspace(-180, 180, gv.n_size[0]) 
     smooth_line_E.set_xdata(theta)
     smooth_line_E.set_ydata(smooth_rates[0, i,:gv.n_size[0]])
 
     if(gv.n_pop==2):
-        theta = np.linspace(0, np.pi, gv.n_size[1])
+        theta = np.linspace(-180, 180, gv.n_size[1]) 
+        # theta = np.linspace(0, np.pi, gv.n_size[1])
         smooth_line_I.set_xdata(theta)     
         smooth_line_I.set_ydata(smooth_rates[1, i,:gv.n_size[1]]) 
     

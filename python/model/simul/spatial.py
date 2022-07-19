@@ -26,7 +26,7 @@ else:
     n_neurons = rates.shape[0] 
     
 mean_rates = np.nanmean(rates, axis=-1) 
-m1, phi, smooth_rates = get_m1_phi_smooth_rates(rates)
+# m1, phi, smooth_rates = get_m1_phi_smooth_rates(rates[:int(5/gv.T_WINDOW)])
 
 figtitle = 'spatial_profile_' + gv.folder 
 
@@ -39,7 +39,7 @@ BL_rates = np.nanmean(rates[0:int(2/gv.T_WINDOW)-2], axis=0) # over time
 stim_rates = np.nanmean(rates[int(2/gv.T_WINDOW):int(3/gv.T_WINDOW)-2], axis=0) # over time 
 delay_rates = np.nanmean(rates[int(3/gv.T_WINDOW):int(5/gv.T_WINDOW)-2], axis=0) # over time
 
-print('m1', m1[0, int(2/(gv.T_WINDOW)-2)])
+# print('m1', m1[0, int(2/(gv.T_WINDOW)-2)])
 
 i_pop=0
 theta = np.linspace(-180, 180, gv.n_size[i_pop]) 
@@ -50,7 +50,7 @@ pop_rates = BL_rates[i_pop]
 pop_rates = pop_rates[~np.isnan(pop_rates)] 
 
 smooth_BL_rates = circular_convolution(pop_rates, int(pop_rates.shape[0]*.01) ) 
-BL_m1, BL_phi = decode_bump(smooth_BL_rates)     
+BL_m1, BL_phi = decode_bump(smooth_BL_rates) 
 smooth_BL_rates = np.roll(smooth_BL_rates, int((BL_phi/np.pi - 0.5 ) *gv.n_size[i_pop])) 
 
 print('BL', BL_rates[i_pop], '[<m0>]', np.mean(pop_rates), '[<m1>]', BL_m1, '[<phi>]', 2*BL_phi*180/np.pi-180) 
@@ -61,7 +61,7 @@ plt.title('Baseline')
 plt.xlabel('Prefered Location (°)')
 plt.xticks([-180, -90, 0, 90, 180])
 plt.ylabel('Rates (Hz)') 
-plt.ylim([0,20])
+plt.ylim([0, 30])
 
 ax = fig.add_subplot(1,3,2) 
     
@@ -80,7 +80,7 @@ plt.title('Stimulation')
 plt.xlabel('Prefered Location (°)')
 plt.xticks([-180, -90, 0, 90, 180])
 plt.ylabel('Rates (Hz)') 
-plt.ylim([0,20])
+plt.ylim([0, 30])
 
 ax = fig.add_subplot(1,3,3) 
     
@@ -88,7 +88,8 @@ pop_rates = delay_rates[i_pop]
 pop_rates = pop_rates[~np.isnan(pop_rates)] 
 
 smooth_delay_rates = circular_convolution(pop_rates, int(pop_rates.shape[0]*.01) ) 
-delay_m1, delay_phi = decode_bump(smooth_delay_rates)     
+delay_m1, delay_phi = decode_bump(smooth_delay_rates)
+
 smooth_delay_rates = np.roll(smooth_delay_rates, int((delay_phi/np.pi - 0.5 ) *gv.n_size[i_pop])) 
 
 print('BL', BL_rates[i_pop], '[<m0>]', np.mean(pop_rates), '[<m1>]', delay_m1, '[<phi>]', 2*delay_phi*180/np.pi-180) 
@@ -98,5 +99,5 @@ plt.title('Delay')
 plt.xlabel('Prefered Location (°)')
 plt.xticks([-180, -90, 0, 90, 180])
 plt.ylabel('Rates (Hz)') 
-plt.ylim([0,20])
+plt.ylim([0,30])
 plt.show()

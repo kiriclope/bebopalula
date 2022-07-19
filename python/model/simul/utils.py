@@ -38,8 +38,8 @@ def add_vlines_axis(axis):
     
     axis.axvspan(gv.T_SAMPLE_ON, gv.T_SAMPLE_OFF, alpha=0.1, color='b') 
     axis.axvspan(gv.T_DIST_ON, gv.T_DIST_OFF, alpha=0.1, color='b') 
-    axis.axvspan(gv.T_TEST_ON, gv.T_TEST_OFF, alpha=0.1, color='b') 
-    axis.axvspan(gv.T_CUE_ON, gv.T_CUE_OFF, alpha=0.1, color='g') 
+    # axis.axvspan(gv.T_TEST_ON, gv.T_TEST_OFF, alpha=0.1, color='b') 
+    # axis.axvspan(gv.T_CUE_ON, gv.T_CUE_OFF, alpha=0.1, color='g') 
     
 def get_time_rates(MAP=0, path=gv.path, con_path=gv.con_path): 
     
