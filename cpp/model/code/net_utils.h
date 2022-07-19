@@ -200,7 +200,8 @@ void delete_globals() {
   if(IF_RK2)
     delete [] net_inputs_RK2 ; 
   
-  delete [] ext_inputs ; 
+  delete [] ext_inputs ;
+  delete [] sigma_FF ; 
   delete [] ff_inputs ; 
   delete [] J ; 
   delete [] J_scaled ;
@@ -288,6 +289,7 @@ void get_param() {
   cout << file_name << endl; 
   
   ext_inputs = new double [n_pop]() ;
+  sigma_FF = new double [n_pop]() ;
   J = new double [n_pop*n_pop]() ;
   
   double *Tsyn ;
@@ -311,8 +313,11 @@ void get_param() {
 
       if(i==2)
 	if(j!=-1) Tsyn[j] = stod(token, &sz) ; 
+
+      if(i==3)
+	if(j!=-1) sigma_FF[j] = stod(token, &sz) ; 
       
-      j++ ;
+      j++ ; 
     }
     
     if(file.unget().get() == '\n') {
@@ -329,6 +334,11 @@ void get_param() {
   for(int i=0;i<n_pop;i++)
     cout << ext_inputs[i] << " " ;
   cout << endl ;
+
+  cout << "ext_var" << endl ;
+  for(int i=0;i<n_pop;i++)
+    cout << sigma_FF[i] << " " ;
+  cout << endl ;
   
   cout << "J" << endl ;
   for(int i=0;i<n_pop;i++) {
@@ -341,9 +351,10 @@ void get_param() {
   for(int i=0;i<n_pop;i++) {
     for(int j=0;j<n_pop;j++)
       cout << Tsyn[j+i*n_pop] << " " ;
-    cout << endl ;
+    cout << endl ;    
   }
-    
+  
+  
 }
 
 double Phi(double x) { // Gaussian CDF

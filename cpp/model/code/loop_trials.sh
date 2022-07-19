@@ -1,9 +1,13 @@
 #!/usr/bin/env bash 
+rand=$RANDOM # has to be outside
 
-temp_files=$(./bash_utils.sh)
-temp_globals=$(echo $temp_files | awk 'NR==1{print $1}') 
-temp_main=$(echo $temp_files | awk 'NR==1{print $2}') 
-temp_out=$(echo $temp_files | awk 'NR==1{print $3}') 
+./bash_utils.sh $rand
+
+temp_main=$(printf 'temp_%d_main.cpp' $rand) 
+temp_globals=$(printf 'temp_%d_globals.h' $rand) 
+temp_out=$(printf 'temp_%d_a' $rand) 
+
+echo $temp_globals $temp_main $temp_out
 
 IF_LIF=1 
 IF_BIN=0 
@@ -21,9 +25,9 @@ FIX_MAP_SEED=1
 IF_LOW_RANK=0 
 FIX_KSI_SEED=1 
 
-sed -ie "s/ DURATION .*/ DURATION (double) 8E3 /" "$temp_globals" ; 
+sed -ie "s/ DURATION .*/ DURATION (double) 8.0E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_INI .*/ TIME_INI (double) 0E3 /" "$temp_globals" ; 
-sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 10E3 /" "$temp_globals" ; 
+sed -ie "s/ TIME_STEADY .*/ TIME_STEADY (double) 2.0E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_WINDOW .*/ TIME_WINDOW (double) .050E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_REC .*/ TIME_REC (double) 60E3 /" "$temp_globals" ; 
 sed -ie "s/ TIME_REC_SPIKES .*/ TIME_REC_SPIKES (double) 0E3 /" "$temp_globals" ; 
@@ -60,16 +64,15 @@ sed -ie "s/ IF_CON_DIR .*/ IF_CON_DIR 1 /" "$temp_globals" ;
 read n_pop N K dir n_trials <<<  "$1 $2 $3 $4 $5" 
 
 # generating connectivity with cuda
-rand=$RANDOM # has to be outside
 
 sed -ie "s/ SEED_CON .*/ SEED_CON $rand /" "$temp_globals" ; 
 
 ( cd ../../../cuda/connectivity/ ;
   
   ./bash_utils.sh $rand
-  temp_cuda_main=$(printf 'temp_cuda_main_%d.cu' $rand) 
-  temp_cuda_globals=$(printf 'temp_cuda_globals_%d.h' $rand) 
-  temp_cuda_out=$(printf 'temp_cuda_%d_a.out' $rand) 
+  temp_cuda_main=$(printf 'temp_%d_cuda_main.cu' $rand) 
+  temp_cuda_globals=$(printf 'temp_%d_cuda_globals.h' $rand) 
+  temp_cuda_out=$(printf 'temp_%d_cuda_a.out' $rand) 
   
   head $temp_cuda_main 
   
@@ -87,7 +90,7 @@ sed -ie "s/ SEED_CON .*/ SEED_CON $rand /" "$temp_globals" ;
   # make > /dev/null 2>&1 ; 
 ) 
 
-for trial in $(seq 1 1 $n_trials); do
+for trial in $(seq 11 1 $n_trials); do
     
     echo "#########################################################################" 
     ./mem_usage.sh 
@@ -112,7 +115,7 @@ for trial in $(seq 1 1 $n_trials); do
     echo "generating connectivity trial ${trial} :" 
     echo "#########################################################################" 
     ( cd ../../../cuda/connectivity/ ; 
-      temp_cuda_out=$(printf 'temp_cuda_%d_a.out' $rand) 
+      temp_cuda_out=$(printf 'temp_%d_cuda_a.out' $rand) 
       # ./a.out > /dev/null ; 
       ./${temp_cuda_out} ; 
     ) 
@@ -145,8 +148,8 @@ for trial in $(seq 1 1 $n_trials); do
     # # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
     # # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_close srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
     
-    # echo "#########################################################################" 
-    # ./mem_usage.sh
+    echo "#########################################################################" 
+    ./mem_usage.sh
     
     echo "#########################################################################" 
     echo "compiling far condition"
@@ -155,20 +158,42 @@ for trial in $(seq 1 1 $n_trials); do
     sed -ie "s/ PHI_CUE (double) .*/ PHI_CUE (double) .25 /" "$temp_globals" ; 
     sed -ie "s/ PHI_ERASE (double) .*/ PHI_ERASE (double) .75 /" "$temp_globals" ;
 
-    sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.0 /" "$temp_globals" ; 
+    # sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 1.0 /" "$temp_globals" ; 
     
-    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
+    g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}.out -lgsl -lgslcblas 
     
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far ./${temp_out}.out $n_pop $N $K ${dir}_off 
     
-    # sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 0.0 /" "$temp_globals" ; 
+    echo "#########################################################################" 
+    ./mem_usage.sh 
+    # ./cpu_usage.sh 
+    echo "#########################################################################" 
     
-    # g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${trial}.out -lgsl -lgslcblas 
+    # sed -ie "s/ SIGMA_FF .*/ SIGMA_FF (double) 5.0 /" "$temp_globals" ; 
     
-    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
+    # g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}.out -lgsl -lgslcblas 
+    
+    screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far ./${temp_out}.out $n_pop $N $K ${dir}_on 
     # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_off_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_off 
     # screen -dmS ${n_pop}_pop_${dir}_N_${N}_K_${K}_trial_${trial}_on_far srun --priority="TOP" ./${temp_out}_${trial}.out $n_pop $N $K ${dir}_on 
     
 done
 
-# rm $temp_files
+rm $temp_main
+rm $temp_globals
+rm ${temp_out}.out
+
+( cd ../../../cuda/connectivity/ ;
+
+  temp_cuda_main=$(printf 'temp_%d_cuda_main.cu' $rand) 
+  temp_cuda_globals=$(printf 'temp_%d_cuda_globals.h' $rand) 
+  temp_cuda_out=$(printf 'temp_%d_cuda_a.out' $rand) 
+  
+  rm $temp_cuda_main
+  rm $temp_cuda_globals
+  rm $temp_cuda_out 
+) 
+
+temp_path=$(printf '../connectivity/2pop/seed_%d' $rand) 
+rm -rf $temp_path 
+

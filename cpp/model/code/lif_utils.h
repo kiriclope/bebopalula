@@ -138,9 +138,15 @@ void scale_ext_inputs() {
   } 
   cout << endl ; 
   
-  if(SIGMA_FF>0.0) 
-    for(i=0;i<n_pop;i++) // presynaptic population b 
-      var_ff[i] = sqrt_Ka[i] * sqrt( sigma_FF[i] ) ; 
+  /* if(SIGMA_FF>0.0) { */
+  cout << "sacaled var_ff" ;
+  for(i=0;i<n_pop;i++) { 
+    var_ff[i] = sqrt( ext_inputs_scaled[i] * sigma_FF[i] / sqrt_Ka[0] ) ; 
+    /* var_ff[i] *= sqrt_Ka[0] ; */
+    /* var_ff[i] = sqrt_Ka[0] * sqrt( sigma_FF[i] ) ;  */ 
+    cout << " " << var_ff[i] ; 
+  } 
+  cout << endl ; 
   
   for(i=0; i<n_neurons; i++) 
     ff_inputs[i] = ext_inputs_scaled[which_pop[i]] ; 
@@ -334,9 +340,11 @@ void update_net_inputs() {
   for(i=0;i<n_neurons;i++) 
     net_inputs[i] = ff_inputs[i] ;
   
-  if(SIGMA_FF>0.0) 
-    for(i=0;i<n_neurons;i++) 
-      net_inputs[i] += var_ff[which_pop[i]] * white_noise(rand_gen) ; 
+  for(i=0;i<n_pop;i++) 
+    if(var_ff[i]>0.0) 
+      for(j=cum_n_per_pop[i]; j<cum_n_per_pop[i+1]; j++) 
+	net_inputs[j] += var_ff[i] * white_noise(rand_gen) ; 
+  
   /* net_inputs[i] += sqrt(SIGMA_FF) * white_noise(rand_gen) ;  */
   
   /* if(IF_POISSON_FF) { */
@@ -697,7 +705,7 @@ void run_sim_lif() {
       /* 	release_stp() ; */
       
     } //endfor neurons 
-        
+    
     update_net_inputs() ; 
     
     print_rates() ; 

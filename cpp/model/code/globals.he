@@ -79,7 +79,6 @@ unsigned long n_neurons ;
 double K, sqrt_K, *sqrt_Ka, *Ka ; 
 
 double *ext_inputs, *ff_inputs, *J, *tau_syn , *J_scaled, *J_nmda, *ext_inputs_scaled ; 
-double *sigma_FF ;
 
 unsigned long *n_per_pop, *cum_n_per_pop ; 
 int *which_pop ; 
@@ -130,8 +129,8 @@ const double kappas[4] = {KAPPA, KAPPA*.5, KAPPA, KAPPA*.5} ;
 #define DEG_TO_RAD (double) M_PI/180.0 
 const double SIGMA[4] = {60.0, 60.0, 70.0, 60.0} ; 
 
-/* #define SIGMA_FF (double) 0.0  */
-/* const double sigma_FF[2] = {SIGMA_FF, 0.0} ;  */
+#define SIGMA_FF (double) 10.0 
+const double sigma_FF[2] = {SIGMA_FF, 0.0} ; 
 
 double var_ff[2] = {0.0, 0.0} ; 
 #define IF_POISSON_FF 0 

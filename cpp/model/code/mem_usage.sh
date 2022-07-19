@@ -4,19 +4,23 @@ mem_usage=`free -m | awk 'NR==2{print $3/$2*100 }'`
 mem_usage=$( printf "%.0f" $mem_usage )
 echo "mem_usage" $mem_usage "%"
 
-if [ $mem_usage -gt 40 ]; then
-    echo " MEM_USAGE > 40.0, sleeping for a while ..."    
+if [ $mem_usage -gt 70 ]; then
+    echo " MEM_USAGE > 70.0 %, sleeping for a while ..."    
 fi
 
-while [ $mem_usage -gt 40 ]; 
+while [ $mem_usage -gt 70 ]; 
 do
-    sleep 2s ; 
+    sleep 60s ;
+    
     mem_usage=`free -m | awk 'NR==2{print $3/$2*100 }'` ;
     mem_usage=$( printf "%.0f" $mem_usage )
     
-    if [ $mem_usage -gt 99 ]; then
-	echo " MEM_USAGE > 99.0, killing everything ..."
-	pkill screen
-    fi
+    # if [ $mem_usage -gt 99 ]; then
+    # 	echo " MEM_USAGE > 99 %, killing everything ..."
+    # 	sleep 60s
+    # 	# if [ $mem_usage -gt 99 ]; then
+    # 	#     pkill screen
+    # 	# fi
+    # fi
     
 done
