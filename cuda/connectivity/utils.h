@@ -81,7 +81,7 @@ __host__ void gen_con_sparse_rep() {
     }
   }
   
-  /* free(con_vec) ;  */ 
+  free(con_vec) ; 
   
   printf(" total_n_con: %llu \n", total_n_post ) ; 
 

@@ -34,7 +34,8 @@ __device__ int DEV_IF_STRUCTURE=0 ;
 
 __device__ const double DEV_IS_STRUCT_SYN[4] = {1.0, 1.0, 1.0, 1.0} ; 
 
-int con_vec_chunck[CHUNCK_SIZE], con_vec[N_NEURONS*N_NEURONS] ; 
+int con_vec_chunck[CHUNCK_SIZE] ;
+int *con_vec ; 
 
 __device__ int dev_con_vec_chunck[CHUNCK_SIZE] ; 
 __device__ double dev_con_prob_chunck[CHUNCK_SIZE] ; 
@@ -64,6 +65,7 @@ __host__ void init_cuda_globals() {
   printf("###########################################################\n") ; 
   
   cudaCheck(cudaGetDeviceProperties(&prop, deviceId)) ; 
+  con_vec = (int*) malloc( (unsigned long) N_NEURONS * N_NEURONS * sizeof(int) ) ; 
   
   for(i=0; i<N_NEURONS*N_NEURONS; i++) 
     con_vec[i] = 0 ; 

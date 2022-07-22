@@ -10,7 +10,7 @@ using namespace:: std ;
 
 #define n_pop 2 
 #define N_NEURONS (unsigned long) 40000 
-#define K (double) 2000 
+#define K (double) 4000 
 #define sqrt_K (double) sqrt(K) 
 
 #define E_frac (double) 0.8

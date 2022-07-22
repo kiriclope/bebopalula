@@ -10,7 +10,7 @@ using namespace:: std ;
 
 #define n_pop 2 
 #define N_NEURONS (unsigned long) 40000 
-#define K (double) 2000 
+#define K (double) 4000 
 #define sqrt_K (double) sqrt(K) 
 
 #define E_frac (double) 0.8
@@ -20,7 +20,7 @@ const double n_frac[2] = { E_frac, round( (1.0 - E_frac)*100.0) / 100.0 } ;
 // string path = "/homecentral/alexandre.mahrach/IDIBAPS/connectivity/" ;
 string path = "../../cpp/model/connectivity/" ;
 
-#define IF_CON_DIR 1 
+#define IF_CON_DIR 0 
 #define SEED_CON (double) 1.0 
 
 unsigned long i, j, i_neuron ;
