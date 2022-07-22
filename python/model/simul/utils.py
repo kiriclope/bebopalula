@@ -41,7 +41,7 @@ def add_vlines_axis(axis):
     # axis.axvspan(gv.T_TEST_ON, gv.T_TEST_OFF, alpha=0.1, color='b') 
     # axis.axvspan(gv.T_CUE_ON, gv.T_CUE_OFF, alpha=0.1, color='g') 
     
-def get_time_rates(MAP=0, path=gv.path, con_path=gv.con_path): 
+def get_time_rates(n_pop=gv.n_pop, n_size=gv.n_size, MAP=0, path=gv.path, con_path=gv.con_path): 
     
     filter_rates = pd.read_csv(path + '/filter_rates.dat', sep='\s+', header=None).to_numpy()
     time = filter_rates[:,0] / 1000 
@@ -51,9 +51,8 @@ def get_time_rates(MAP=0, path=gv.path, con_path=gv.con_path):
         idx_perm = get_idx_perm(con_path) 
         rates = rates[:, idx_perm]
     
-    if gv.n_pop!=1:
-                
-        rates = pad_along_axis(rates, gv.n_size[0]-gv.n_size[1])         
+    if n_pop!=1: 
+        rates = pad_along_axis(rates, n_size[0]-n_size[1])         
         n_neurons = int(rates.shape[1]/2) 
         rates = np.reshape(rates, (rates.shape[0], 2, n_neurons))
         
