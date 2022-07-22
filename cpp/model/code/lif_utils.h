@@ -139,7 +139,7 @@ void scale_ext_inputs() {
   cout << endl ; 
   
   /* if(SIGMA_FF>0.0) { */
-  cout << "sacaled var_ff" ;
+  cout << "scaled var_ff" ;
   for(i=0;i<n_pop;i++) { 
     var_ff[i] = sqrt( ext_inputs_scaled[i] * sigma_FF[i] / sqrt_Ka[0] ) ; 
     /* var_ff[i] *= sqrt_Ka[0] ; */

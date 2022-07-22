@@ -101,6 +101,8 @@ for ini in $(seq 1 1 $n_ini); do
 	# g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}_${ini}_${trial}.out -lgsl -lgslcblas 
 	
 	g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}.out -lgsl -lgslcblas 
+
+	# screen -dmS off_ini_${ini}_trial_${trial}_${n_pop}_pop_bump_off_N_${N}_K_${K} ./${temp_out}.out $n_pop $N $K bump_off 
 	
 	screen -dmS off_ini_${ini}_trial_${trial}_${n_pop}_pop_${dir}_N_${N}_K_${K} ./${temp_out}.out $n_pop $N $K ${dir}_off 
 	
@@ -111,7 +113,7 @@ for ini in $(seq 1 1 $n_ini); do
 	
 	# g++ -L/home/leon/bebopalula/cpp/libs/gsl/lib -I/home/leon/bebopalula/cpp/libs/gsl/include -std=c++11 ${temp_main} -Ofast -s -o ${temp_out}.out -lgsl -lgslcblas
 	
-	screen -dmS on_ini_${ini}_trial_${trial}_${n_pop}_pop_${dir}_N_${N}_K_${K} ./${temp_out}.out $n_pop $N $K ${dir}_on 
+	# screen -dmS on_ini_${ini}_trial_${trial}_${n_pop}_pop_${dir}_N_${N}_K_${K} ./${temp_out}.out $n_pop $N $K ${dir}_on 
 	
 	# g++ ${temp_main} -Ofast -s -std=c++11 -o ${temp_out} -lgsl -lblas 
 	# ./${temp_out} $n_pop $N $K $dir 
